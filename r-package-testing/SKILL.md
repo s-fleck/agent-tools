@@ -3,7 +3,7 @@ name: r-package-testing
 description: Best practices for writing R package tests using testthat version 3+. Use when writing, organizing, or improving tests for R packages. Covers test structure, expectations, fixtures, snapshots, mocking, and modern testthat 3 patterns including self-sufficient tests, proper cleanup with withr, and snapshot testing.
 metadata:
   author: Garrick Aden-Buie (@gadenbuie)
-  version: "2.0"
+  version: "2.1"
 license: MIT
 ---
 
@@ -238,6 +238,24 @@ During development:
 - Makes all functions available (including unexported)
 - Automatically attaches testthat
 - Eliminates need for `library()` calls in tests
+
+## State, Scope, and Skipping
+
+- **No `<<-` anywhere** (style guide) — test callbacks like
+  `capture_records({ res <- f() })` evaluate in the caller's environment, so
+  plain `<-` suffices.
+- **Capture helpers must restore global state** on every path: flip
+  thresholds/options inside `on.exit(..., add = TRUE)` / `withr::defer()`, and
+  mute console output while buffering logs. Suite-wide baseline state (quiet
+  logging, default options) lives in `setup*.R`, not per-file calls.
+- **Flagship tests fail loud, never green-by-skip.** `skip_if()` on something
+  the test should resolve hides regressions; skip only for genuinely
+  machine-dependent fixtures, with a comment justifying the coverage gap.
+- **Shiny `testServer()`**: `args =` is modules only — a full server errors
+  with "Arguments were provided"; wrap as `function(input, output, session)
+  my_server(..., data_dir = x)` and assert via `output$*` (the wrapper hides
+  inner reactives). `observeEvent(ignoreInit = TRUE)` needs a value *change*:
+  `setInputs(x = 0)`, then `setInputs(x = 1)`.
 
 ## Common Patterns and Examples
 
@@ -502,3 +520,4 @@ When working with testthat 3 code, prefer modern patterns:
 - Do **not** call `library()` inside individual `test_that()` blocks — load packages once at the top of the test file
 - Do **not** add `@export` to functions just to make them testable — use `:::` for internal functions
 - Do **not** write tests that rely on hidden dependencies on earlier tests — each test should be independent
+- Do **not** let flagship tests `skip()` on conditions they should resolve — fail loud; justify machine-dependent skips with a comment
