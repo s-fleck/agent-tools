@@ -6,7 +6,7 @@ description: >
   functions, formatting, data.table, prohibited packages).
 metadata:
   author: Stefan Fleck
-  version: "2.3.0"
+  version: "3.0.0"
 ---
 
 # R Package Style Guide
@@ -48,31 +48,31 @@ the `r-package-development` skill.
 
 ## Errors (fail loud)
 
-- **Error primitive is `rlang::abort(..., call = NULL)`** — `call = NULL`
-  suppresses the call site in the message. `stop()` is banned in package code.
-- **`abort()`'s second positional argument is `class`** — never pass a second
-  unnamed string (it becomes the condition class and can recurse to a stack
-  overflow; this bit a split message in a real package). Combine message parts
-  with `sprintf()`/`paste0()` into one string.
-- **Validation toolset**: prefer the project's vendored assertion helpers —
-  `assert(condition, message)` plus the predicates `is_scalar`,
-  `is_scalar_numeric`, `is_scalar_integer`, `is_scalar_logical`,
-  `is_scalar_bool`, `is_bool`, `is_n`, `is_n0`, `is_integerish`,
-  `is_equal_length`, `is_empty`, `is_blank`. Prefer
-  `assert(<NA-safe predicate combo>, <message>)` over hand-rolled
-  `if (bad) abort()`.
-- **`assert()` needs a strictly `TRUE`/`FALSE` condition** — an `NA` or length-0
-  condition fires the generic "Assertion must be either 'TRUE' or 'FALSE'"
-  instead of your message. Compose NA-safe predicates (`is_scalar_numeric(x) &&
-  !is.na(x)`, `!anyNA(x)`, …), never a bare comparison that can yield `NA`.
+- **Error primitive is `stop()` with a classed condition** — raise a custom
+  condition so callers can catch a class: `stop(ConfigValidationError(msg))`,
+  or `error(message = msg, class = "MyError")`. Never `stop()` with a bare
+  string for a user-facing failure: name the offending argument/file/key/value.
+- **One message, one string** — combine message parts with
+  `sprintf()`/`paste0()` into a single string before raising. A condition
+  constructor takes one message; splitting it across calls loses the class.
+- **Validation**: if the project vendors assertion helpers — `assert(condition,
+  message)` plus NA-safe predicates such as `is_scalar_numeric()`, `is_n()`,
+  `is_integerish()` — prefer them over hand-rolled `if (bad) stop(...)`. An
+  assertion helper needs a strictly `TRUE`/`FALSE` condition: an `NA` or
+  length-0 condition fires a generic message instead of yours, so compose
+  NA-safe predicates (`!anyNA(x)`, `is_scalar_numeric(x) && !is.na(x)`), never
+  a bare comparison that can yield `NA`.
 - **Rethrow preserves the original condition**: inside `tryCatch(..., error = ...)`
-  log with context, then `rlang::cnd_signal(e)` — never `stop(e)` or `abort()`,
-  which lose the original class/call.
+  log with context, then re-raise the caught condition with `stop(e)` — never
+  rebuild it from `conditionMessage(e)`, which drops the class.
 - `sprintf()` templates and args must match exactly — a stray arg only *warns*
   at runtime, it does not fail. Assert the rendered message with
   `expect_error(regexp = )`.
-- No `stopifnot()` for user-facing errors: `abort(sprintf(...), call = NULL)` must
+- No `stopifnot()` for user-facing errors: `stop(<Condition>(sprintf(...)))` must
   name the offending argument/file/key/value.
+
+**Package depends on rlang?** Load the `r-package-style-guide-rlang` skill — it
+overrides this section only.
 
 ## File & console I/O
 

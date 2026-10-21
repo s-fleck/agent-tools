@@ -11,6 +11,16 @@ name as the area prefix.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-21
+
+### Added
+
+- **r-package-style-guide-rlang:** Add overlay skill with the rlang error rules for packages that depend on rlang (1.0.0)
+
+### Changed
+
+- **r-package-style-guide:** Replace the rlang error rules with base-R ones (classed conditions via `stop()`); the rlang rules move to the `r-package-style-guide-rlang` overlay (3.0.0)
+
 ## [0.1.0] - 2026-10-21
 
 ### Added
@@ -31,5 +41,6 @@ name as the area prefix.
 - **r-package-testing:** Credit the amending author alongside the original author in the frontmatter (2.2.0)
 - **r-roxygen:** Add frontmatter and a version (1.0.0)
 
-[Unreleased]: https://github.com/s-fleck/agent-tools/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/s-fleck/agent-tools/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/s-fleck/agent-tools/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/s-fleck/agent-tools/releases/tag/v0.1.0

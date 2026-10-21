@@ -41,7 +41,7 @@ license: MIT                        # optional
 compatibility: Requires R >= 4.2    # optional
 metadata:                           # optional; flat string → string map, no nesting
   author: Stefan Fleck
-  version: 2.3.0
+  version: 3.0.0
 ---
 ```
 
@@ -56,7 +56,7 @@ Canonical copy — no project markers:
 ```yaml
 metadata:
   author: Stefan Fleck
-  version: 2.3.0
+  version: 3.0.0
 ```
 
 Project copy with local amendments — three extra keys:
@@ -64,9 +64,9 @@ Project copy with local amendments — three extra keys:
 ```yaml
 metadata:
   author: Stefan Fleck
-  version: 2.3.0+fire.1
+  version: 3.0.0+fire.1
   variant: fire
-  upstream: r-package-style-guide@2.3.0
+  upstream: r-package-style-guide@3.0.0
   local_changes: "Problem: repro stamp and symbol refs; Lifecycle: OpenSpec change link"
 ```
 

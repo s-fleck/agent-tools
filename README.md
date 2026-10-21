@@ -1,6 +1,6 @@
 # agent-tools — archival source of agent tooling
 
-**Version:** 0.1.0 — see [CHANGELOG.md](CHANGELOG.md) for the release history. Releases are tagged `v<version>`.
+**Version:** 0.2.0 — see [CHANGELOG.md](CHANGELOG.md) for the release history. Releases are tagged `v<version>`.
 
 Canonical copies of opencode tooling (skills, commands, subagents, checks) that projects **copy from** when needed. It is deliberately not a live tool directory:
 
@@ -20,6 +20,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 ## Contents
 
 - `skills/r-package-*`, `skills/r-roxygen`, `skills/r-news-styleguide`, `skills/data-table` — R package development, style, testing, docs, release notes, `data.table` semantics.
+- `skills/r-package-style-guide-rlang` — overlay for `r-package-style-guide`: load it *together with* the base skill when the package depends on rlang. It overrides the error rules only; the shared rules live in the base skill, so there is nothing to keep in sync.
 - `skills/changelog-style-guide` — changelog convention for non-R projects.
 - `skills/github-issue` — composing/filing issues plus the self-contained GitHub REST helper (`gh.py`, vendored with the skill directory).
 - `skills/issue-comment` — post-solve issue comments.
