@@ -11,6 +11,14 @@ name as the area prefix.
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-10-21
+
+### Changed
+
+- **agent-tools:** README: add a selection table, the overlay pairing rule, a restart note, and a verification step (opencode debug skill)
+- **r-news-styleguide:** Use a neutral `<pkg>` placeholder instead of the fire example, so projects can vendor it unchanged (1.3.0)
+- **skill-update:** Do not hardcode the canonical repo path, so the skill works when vendored elsewhere (1.0.1)
+
 ## [0.2.0] - 2026-10-21
 
 ### Added
@@ -41,6 +49,7 @@ name as the area prefix.
 - **r-package-testing:** Credit the amending author alongside the original author in the frontmatter (2.2.0)
 - **r-roxygen:** Add frontmatter and a version (1.0.0)
 
-[Unreleased]: https://github.com/s-fleck/agent-tools/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/s-fleck/agent-tools/compare/v0.2.1...HEAD
+[0.2.1]: https://github.com/s-fleck/agent-tools/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/s-fleck/agent-tools/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/s-fleck/agent-tools/releases/tag/v0.1.0

@@ -3,7 +3,7 @@ name: skill-update
 description: Use when changing a skill — amending a project copy with project-specific rules, marking a copy as a variant, bumping a skill's version, renaming or forking a skill, writing its changelog entry, or syncing a project's amendments back into the canonical skill repo.
 metadata:
   author: Stefan Fleck
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # Skill Update
@@ -21,7 +21,7 @@ A skill exists in two places: the **canonical copy** in the skill repo (upstream
 
 | Role | Lives in | Frontmatter |
 |------|----------|-------------|
-| Canonical | `agent-tools/skills/<name>/` | `author` + `version` only |
+| Canonical | the skill repo's `skills/<name>/` | `author` + `version` only |
 | Project copy | `<project>/.opencode/skills/<name>/` | `author` + `version`, plus `variant`/`upstream`/`local_changes` once amended |
 
 - The canonical copy is upstream. A project copy is upstream **plus** local amendments, and says so in its metadata.
@@ -122,7 +122,7 @@ Every change to a skill bumps its version. Nothing ships unbumped.
 
 ## Syncing Back to Canonical
 
-1. Diff: `diff -ru agent-tools/skills/<name> <project>/.opencode/skills/<name>`.
+1. Diff: `diff -ru <skill-repo>/skills/<name> <project>/.opencode/skills/<name>`.
 2. Classify every hunk:
    - **Generic** — the rule holds for any project → move to the canonical copy.
    - **Project-specific** — names a project file, function, path, token, or convention → stays in the project. Genericize the *lesson* into the canonical copy (keep the rule, drop the names) and keep the names in the project copy.
