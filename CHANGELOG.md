@@ -31,5 +31,5 @@ name as the area prefix.
 - **r-package-testing:** Credit the amending author alongside the original author in the frontmatter (2.2.0)
 - **r-roxygen:** Add frontmatter and a version (1.0.0)
 
-[Unreleased]: https://github.com/s-fleck/skills/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/s-fleck/skills/releases/tag/v0.1.0
+[Unreleased]: https://github.com/s-fleck/agent-tools/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/s-fleck/agent-tools/releases/tag/v0.1.0
