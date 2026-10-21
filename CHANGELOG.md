@@ -1,0 +1,35 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+Skill changes are the unit of release here: every skill carries its own
+`metadata.version`, and every version bump gets an entry below with the skill
+name as the area prefix.
+
+## [Unreleased]
+
+## [0.1.0] - 2026-10-21
+
+### Added
+
+- **data-table:** Add skill covering data.table scoping, joins, by-reference updates, and key types (1.0.0)
+- **skill-update:** Add skill for amending, versioning, renaming, and syncing back skills (1.0.0)
+
+### Changed
+
+- **agent-tools:** Normalize skill versions to full semver and require a changelog entry per version bump
+- **github-issue:** Extract the GitHub REST helper into `gh.py` and add repro-stamp, symbol-reference, and draft-label rules (1.0.0)
+- **issue-comment:** Add the signature policy for agent-authored GitHub content (1.0.0)
+- **r-news-styleguide:** Add the version-bump-on-completion rule and the R NEWS parser note (1.2.0)
+- **r-package-development:** Add the `air format . --check` command and the formatting-baseline rule (1.3.0)
+- **r-package-development:** Restore the original author's frontmatter credit alongside the amending author (1.3.0)
+- **r-package-style-guide:** Add the rlang error rules, the vendored assertion toolset, and the data.table cross-reference (2.3.0)
+- **r-package-testing:** Add the rule against mocking base bindings (2.2.0)
+- **r-package-testing:** Credit the amending author alongside the original author in the frontmatter (2.2.0)
+- **r-roxygen:** Add frontmatter and a version (1.0.0)
+
+[Unreleased]: https://github.com/s-fleck/skills/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/s-fleck/skills/releases/tag/v0.1.0

@@ -1,3 +1,11 @@
+---
+name: r-roxygen
+description: Roxygen2 documentation conventions for R packages — roxygen block structure, @param/@return/@examples, @rdname and @inheritParams, R6 class docs, NAMESPACE imports, and DESCRIPTION Config/roxygen2 settings. Use when writing or reviewing roxygen comments, documenting a function or exported object, or fixing R CMD check documentation warnings.
+metadata:
+  author: Stefan Fleck
+  version: "1.0.0"
+---
+
 # R roxygen2 Documentation Skill Guide
 
 Use this guide to write consistent, idiomatic roxygen2 documentation for R packages.

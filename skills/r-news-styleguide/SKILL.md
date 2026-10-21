@@ -7,7 +7,7 @@ description: >
   mood, breaking changes, unreleased consolidation, and pre-commit validation.
 metadata:
   author: Stefan Fleck
-  version: "1.0"
+  version: "1.2.0"
 ---
 
 # R NEWS.md Style Guide
@@ -34,6 +34,8 @@ Concretely:
 
 None of this is enforced by `R CMD check` (NEWS.md is optional and not a hard check), but a malformed file makes `news(package = "fire")` return nothing useful and makes pkgdown's changelog page fail to find version headings — both real regressions for a CRAN package with a pkgdown site.
 
+One consequence worth knowing: R's parser lists **dated version headers only** — `tools:::.build_news_db_from_package_NEWS_md()` returns zero rows when the sole heading is `# fire (development version)`, so a development-only changelog parses to nothing until the development block is promoted to a dated `# fire x.y.z (YYYY-MM-DD)` release (see rule 14).
+
 ## Format
 
 - Add line breaks at 80 characters for best readability
@@ -46,29 +48,29 @@ Example NEWS.md:
 
 ## Added
 
-- New features.
+- Add a feature
 
-- New Features 2.
+- Add another feature
 
 ## Changed
 
-- Changes to existing functionality.
+- Change existing functionality
 
 ## Deprecated
 
-- Soon-to-be removed features.
+- Deprecate a feature
 
 ## Removed
 
-- Now removed features.
+- Remove a feature
 
 ## Fixed
 
-- Bug fixes.
+- Fix a bug
 
 ## Security
 
-- Vulnerability fixes.
+- Fix a vulnerability
 
 # fire 0.13.0 (2026-06-21)
 
@@ -113,6 +115,8 @@ Example NEWS.md:
 
 13. **No extra top-level headings** — never add a `# Changelog`/`# NEWS` title or any other `#` heading besides version headers. If you want an intro sentence ("All notable changes..."), put it as plain text with no heading, before the first version block.
 
+14. **Version bump on completion** — every completed change bumps the version and promotes the development block to a dated `# fire x.y.z (YYYY-MM-DD)` heading (rule 2), then resets `# fire (development version)`. A user-visible change (`Added`/`Changed`/`Removed`/`Fixed`/`Deprecated`; `Security` by severity) bumps the **minor** version; an internal-only or docs-only change bumps the **patch** version. This complements rules 1–2 (development block, version header); keep `DESCRIPTION` `Version:` in sync with the newest dated heading.
+
 ## Prose Style
 
 Entries should be **concise**, **specific**, and **user-facing**. A reader should immediately understand what changed and how it affects them.
@@ -147,6 +151,12 @@ Aim for a single line. If a second line is needed for context, keep it brief and
 ### Development-version Features
 
 Treat each unreleased feature as a single evolving changelog entry.
+
+Consolidation applies to iterations of the *same* feature within the current
+development cycle. It does not forbid other change-type sections under
+`# fire (development version)`: genuinely distinct changes, and a one-time
+migration of a changelog that predates this convention, may use the full
+`Added`/`Changed`/`Deprecated`/`Removed`/`Fixed`/`Security` structure.
 
 - If a feature already has an `Added` entry under `# fire (development version)`, update that entry as the feature evolves.
 - Do **not** create additional `Changed` or `Fixed` entries for implementation iterations, bug fixes, or refinements made before the feature ships.

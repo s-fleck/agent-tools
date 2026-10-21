@@ -1,10 +1,12 @@
 # agent-tools — archival source of agent tooling
 
+**Version:** 0.1.0 — see [CHANGELOG.md](CHANGELOG.md) for the release history. Releases are tagged `v<version>`.
+
 Canonical copies of opencode tooling (skills, commands, subagents, checks) that projects **copy from** when needed. It is deliberately not a live tool directory:
 
 - Do **not** add this repo to `skills.paths`, `~/.agents/skills/`, or any other auto-discovery location — agents should only see the tools a project actually vendored.
 - Selection is per project; not everything fits everywhere. Example: R package repos take `r-news-styleguide`, other projects take `changelog-style-guide`.
-- Vendored copies stay byte-identical to this repo; project differences live in the project's `AGENTS.md`.
+- Vendored copies start byte-identical to this repo. A copy that later takes project-specific amendments is marked as a **variant** in its metadata — see [Skill versioning](#skill-versioning).
 
 ## Layout → destination
 
@@ -17,19 +19,42 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 
 ## Contents
 
-- `skills/r-package-*`, `skills/r-roxygen`, `skills/r-news-styleguide` — R package development, style, testing, docs, release notes.
+- `skills/r-package-*`, `skills/r-roxygen`, `skills/r-news-styleguide`, `skills/data-table` — R package development, style, testing, docs, release notes, `data.table` semantics.
 - `skills/changelog-style-guide` — changelog convention for non-R projects.
-- `skills/github-issue` — composing/filing issues plus the self-contained GitHub REST helper.
+- `skills/github-issue` — composing/filing issues plus the self-contained GitHub REST helper (`gh.py`, vendored with the skill directory).
 - `skills/issue-comment` — post-solve issue comments.
 - `skills/doc-rewrite` — scoped review/rewrite procedure for one named document.
+- `skills/skill-update` — amending, versioning, renaming, and syncing back skills; the metadata contract for project-specific variants.
 - `commands/issue-to-spec` — GitHub issue → reviewed OpenSpec change; `/issue-to-spec auto` picks and implements one. Companions: `agents/spec-reviewer`, `skills/github-issue`, `skills/issue-comment`, the project's changelog skill. Prerequisite: OpenSpec (CLI + its `openspec-*` skills).
 - `agents/spec-reviewer` — read-only OpenSpec change reviewer.
 - `scripts/check-docs.R` — markdown cross-reference checker (links, anchors, `file:line`, `§`, `Status:` headers): `Rscript tools/check-docs.R` from the repo root; CI-ready (exit 1 on errors). Base R only.
 
+## Skill versioning
+
+Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metadata.author`. Rules, in short — the `skill-update` skill is the procedure:
+
+- **Every change to a skill bumps its version.** PATCH for wording and fixes, MINOR for new guidance, MAJOR for a changed or removed rule, a changed frontmatter contract, or a rename.
+- **A fork keeps the original author's credit.** `metadata.author` is a comma-separated list, original author first: `author: "Garrick Aden-Buie (@gadenbuie), Stefan Fleck"`. Amendments add to the list, they never replace it. Carry the upstream `license:` line into the fork.
+- **Every version bump gets a `CHANGELOG.md` entry** under `[Unreleased]`, area prefix = skill name. The repo follows its own `changelog-style-guide`.
+- **A project copy with local amendments is a variant** and says so:
+
+  ```yaml
+  metadata:
+    author: Stefan Fleck
+    version: 2.3.0+fire.1     # upstream version + local amendment counter
+    variant: fire            # the project that owns the amendments
+    upstream: r-package-style-guide@2.3.0
+    local_changes: "Problem: repro stamp and symbol refs"
+  ```
+
+  The `+<project>.<n>` suffix is semver build metadata — the base tracks upstream, the counter tracks local amendments. Re-vendoring resets the counter.
+- **Project-specific rules live in the project copy**; the canonical copy stays generic. Genericize the lesson when syncing back — keep the rule, drop the project's names, paths, and tokens.
+- **Rename the folder and the frontmatter `name` together** when a project copy is renamed; the canonical name stays in `upstream`. A rename in this repo is a MAJOR bump.
+
 ## Conventions
 
 - GitHub token: `<REPO>_GH_TOKEN` — repo name uppercased, `-`/`.` → `_` — in `~/.Renviron` (e.g. `FIRE_GH_TOKEN` for `s-fleck/fire`); fallback `GH_TOKEN` / `GITHUB_TOKEN`. Never commit or log it.
-- Vendored copies stay byte-identical to this repo; project differences belong in the project's `AGENTS.md`.
+- Vendored copies start byte-identical to this repo; project differences belong in the project's `AGENTS.md` and, once they touch a skill, in that copy's variant metadata.
 
 ## Vendoring
 
@@ -38,7 +63,13 @@ P=/path/to/project
 mkdir -p "$P/.opencode/skills" "$P/.opencode/agent" "$P/.opencode/commands" "$P/tools"
 cp -r skills/github-issue skills/issue-comment "$P/.opencode/skills/"
 cp -r skills/r-news-styleguide "$P/.opencode/skills/"   # pick per project, e.g. R packages
+cp -r skills/skill-update "$P/.opencode/skills/"          # if the project will amend its copies
 cp agents/spec-reviewer.md "$P/.opencode/agent/"
 cp commands/issue-to-spec.md "$P/.opencode/commands/"
 cp scripts/check-docs.R "$P/tools/"
 ```
+
+A copy stays byte-identical until the project amends it. The first amendment
+turns it into a variant: bump the version suffix, set `variant`, `upstream`,
+and `local_changes` in the copy's frontmatter, and note the rule in the
+project's `AGENTS.md`. See `skills/skill-update`.

@@ -11,12 +11,12 @@ Drive GitHub issue `$ARGUMENTS` from triage to a reviewed OpenSpec change ready 
 
 ## GitHub access
 
-Load the `github-issue` skill — it carries the self-contained helper (derives `owner/repo` from `git remote get-url origin`; resolves the token per the project convention: default `<REPO>_GH_TOKEN` — repo name uppercased, `-`/`.` → `_` — in `~/.Renviron`, e.g. `FIRE_GH_TOKEN`; falls back to `GH_TOKEN`/`GITHUB_TOKEN`; never print or log it). Typical calls:
+Load the `github-issue` skill — it carries the self-contained helper (`gh.py`, next to the skill file: `<project>/.opencode/skills/github-issue/gh.py`; derives `owner/repo` from `git remote get-url origin`; resolves the token per the project convention: default `<REPO>_GH_TOKEN` — repo name uppercased, `-`/`.` → `_` — in `~/.Renviron`, e.g. `FIRE_GH_TOKEN`; falls back to `GH_TOKEN`/`GITHUB_TOKEN`; never print or log it). Typical calls:
 
-- `python3 - GET /issues/<N>` · `python3 - GET /issues/<N>/comments` · `python3 - GET "/issues?state=open&per_page=50"`
-- `python3 - PATCH /issues/<N> /tmp/opencode/issue-<N>-body.md` — full body update (rulings, `Change:` link)
-- `python3 - POST /issues/<N>/comments /tmp/opencode/issue-<N>-comment.md`
-- `python3 - DELETE /issues/<N>/labels/needs-ruling`
+- `python3 .opencode/skills/github-issue/gh.py GET /issues/<N>` · `... GET /issues/<N>/comments` · `... GET "/issues?state=open&per_page=50"`
+- `python3 .opencode/skills/github-issue/gh.py PATCH /issues/<N> /tmp/opencode/issue-<N>-body.md` — full body update (rulings, `Change:` link)
+- `python3 .opencode/skills/github-issue/gh.py POST /issues/<N>/comments /tmp/opencode/issue-<N>-comment.md`
+- `python3 .opencode/skills/github-issue/gh.py DELETE /issues/<N>/labels/needs-ruling`
 
 If `$ARGUMENTS` is a URL, extract the issue number from it.
 

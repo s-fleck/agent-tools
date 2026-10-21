@@ -2,8 +2,8 @@
 name: r-package-testing
 description: Best practices for writing R package tests using testthat version 3+. Use when writing, organizing, or improving tests for R packages. Covers test structure, expectations, fixtures, snapshots, mocking, and modern testthat 3 patterns including self-sufficient tests, proper cleanup with withr, and snapshot testing.
 metadata:
-  author: Garrick Aden-Buie (@gadenbuie)
-  version: "2.1"
+  author: "Garrick Aden-Buie (@gadenbuie), Stefan Fleck"
+  version: "2.2.0"
 license: MIT
 ---
 
@@ -438,6 +438,30 @@ test_that("function works with mocked dependency", {
 
   result <- my_function_that_calls_api()
   expect_equal(result$status, "success")
+})
+```
+
+**Do not mock base bindings (e.g. `requireNamespace`) by replacing the binding
+in the `base` namespace.** Anything that reaches `base` during the mock —
+including `rlang`'s own error machinery, which calls `requireNamespace("rlang")`
+on `abort()` — re-enters your mock and recurses to a stack overflow
+(`infinite recursion / options(expressions=)`). Scope the mock (capture the
+original before mocking) or mock in the package namespace instead:
+
+```r
+test_that("fails without ggplot2", {
+  # capture the real primitive first — mocking in base makes
+  # rlang::abort()'s internal requireNamespace("rlang") recurse into the mock
+  orig_requireNamespace <- requireNamespace
+  testthat::with_mocked_bindings(
+    requireNamespace = function(package, ...) {
+      if (identical(package, "ggplot2")) FALSE else orig_requireNamespace(package, ...)
+    },
+    {
+      expect_error(analyze_spend(), "ggplot2")
+    },
+    .package = "base"
+  )
 })
 ```
 

@@ -1,6 +1,9 @@
 ---
 name: doc-rewrite
 description: Use when reviewing, tightening, or rewriting a named document or section — specs, ADRs, READMEs, guides, architecture docs. Scoped procedure: verify claims against code, repair references, minimal edits. Not for OpenSpec change artifacts.
+metadata:
+  author: Stefan Fleck
+  version: "1.0.0"
 ---
 
 # Scoped documentation review

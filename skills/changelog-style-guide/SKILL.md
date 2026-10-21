@@ -7,7 +7,7 @@ description: >
   prefixes, imperative mood, breaking changes and unreleased consolidation.
 metadata:
   author: Stefan Fleck
-  version: "1.0"
+  version: "1.0.0"
 ---
 
 # Changelog Style Guide
