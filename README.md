@@ -89,8 +89,16 @@ cp -r skills/r-package-style-guide skills/r-package-style-guide-rlang "$P/.openc
 **Then restart opencode.** Skills, agents, and commands are read at startup; a running session keeps the set it started with. After the restart, verify what was picked up:
 
 ```bash
-cd "$P" && opencode debug skill   # lists every skill opencode found
+cd "$P" && opencode debug skill   # lists every skill opencode found, with its path
 ```
+
+**Watch for name collisions.** opencode registers skills by name, and the same
+name in two places is a race: the loader reads all candidates concurrently and
+the last one to finish wins, so a stale global copy (`~/.claude/skills/`,
+`~/.agents/skills/`) can shadow the vendored one — non-deterministically.
+Prefer `.opencode/skills/`, which opencode scans last, and drop stale global
+copies of the same skill. `opencode debug skill` shows which path won. To run
+without the global set entirely: `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`.
 
 A copy stays byte-identical until the project amends it. The first amendment
 turns it into a variant: bump the version suffix, set `variant`, `upstream`,

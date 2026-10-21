@@ -11,6 +11,10 @@ name as the area prefix.
 
 ## [Unreleased]
 
+### Changed
+
+- **agent-tools:** README: warn that a global skill copy can shadow the vendored one (opencode registers skills by name, and the loader resolves duplicates concurrently)
+
 ## [0.2.1] - 2026-10-21
 
 ### Changed
