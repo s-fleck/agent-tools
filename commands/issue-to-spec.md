@@ -11,7 +11,7 @@ Drive GitHub issue `$ARGUMENTS` from triage to a reviewed OpenSpec change ready 
 
 ## GitHub access
 
-Load the `github-issue` skill — it carries the REST helper (`gh.py`, called directly with `python3`, token rules included). If `$ARGUMENTS` is a URL, extract the issue number from it.
+Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included). If `$ARGUMENTS` is a URL, extract the issue number from it.
 
 ## Project conventions
 

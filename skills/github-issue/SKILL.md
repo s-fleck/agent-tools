@@ -1,9 +1,9 @@
 ---
 name: github-issue
-description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style. Also carries the self-contained GitHub REST helper used by the issue-to-spec command.
+description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style. Also carries the self-contained GitHub REST helper (`github-rest.py`, a skill script — not the `gh` CLI) used by the issue-to-spec command.
 metadata:
   author: Stefan Fleck
-  version: "2.0.0"
+  version: "3.0.0"
 ---
 
 Compose issues for the project's issue registry. AGENTS.md rules apply (registry policy wins); this skill is the how-to.
@@ -28,22 +28,24 @@ Compose issues for the project's issue registry. AGENTS.md rules apply (registry
 
 When composing in chat, output the issue markdown only — no commentary around it.
 
-## GitHub REST helper
+## GitHub access: the `github-rest.py` script, not the `gh` CLI
 
-`gh.py` (next to this file) is self-contained: derives `owner/repo` from `git remote get-url origin`, resolves the token per the project convention (`<REPO>_GH_TOKEN` in `~/.Renviron`, e.g. `MYPROJECT_GH_TOKEN`; fallback `GH_TOKEN`/`GITHUB_TOKEN`; never printed or logged). Call it directly — no heredoc:
+`github-rest.py` (next to this file) is the project's only GitHub client. There is no `gh` CLI dependency: no `gh` binary is installed for this workflow and none is needed. The helper is a standard-library Python script, not executable and not on `PATH` — always call it by path with `python3`; `--help` lists the methods and the payload rules. The paths below show a vendored copy; from the canonical repo use `skills/github-issue/github-rest.py`.
+
+It derives `owner/repo` from `git remote get-url origin` and resolves the token from `AGENT_GH_TOKEN`, then `$XDG_CONFIG_HOME/issue-pipeline/github-token` (one line, chmod 600), then a per-repository `<REPO>_GH_TOKEN`, then `GH_TOKEN` and `GITHUB_TOKEN`; the token is never printed or logged. Call it directly — no heredoc:
 
 ```bash
-python3 .opencode/skills/github-issue/gh.py GET /issues/42
-python3 .opencode/skills/github-issue/gh.py GET "/issues?state=open&per_page=50"
-python3 .opencode/skills/github-issue/gh.py POST /issues /tmp/opencode/issue.json                      # create: {"title", "body", "labels"}
-python3 .opencode/skills/github-issue/gh.py PATCH /issues/42 /tmp/opencode/issue-42-body.md            # rulings, `Change:` link
-python3 .opencode/skills/github-issue/gh.py POST /issues/42/comments /tmp/opencode/issue-42-comment.md
-python3 .opencode/skills/github-issue/gh.py DELETE /issues/42/labels/needs-ruling
+python3 .opencode/skills/github-issue/github-rest.py GET /issues/42
+python3 .opencode/skills/github-issue/github-rest.py GET "/issues?state=open&per_page=50"
+python3 .opencode/skills/github-issue/github-rest.py POST /issues /tmp/opencode/issue.json                      # create: {"title", "body", "labels"}
+python3 .opencode/skills/github-issue/github-rest.py PATCH /issues/42 /tmp/opencode/issue-42-body.md            # rulings, `Change:` link
+python3 .opencode/skills/github-issue/github-rest.py POST /issues/42/comments /tmp/opencode/issue-42-comment.md
+python3 .opencode/skills/github-issue/github-rest.py DELETE /issues/42/labels/needs-ruling
 ```
 
 - A file argument ending in `.json` is sent as the raw payload (e.g. creating an issue); anything else (`.md`) is wrapped as `{"body": <text>}` (comments, body updates).
 - `PATCH /issues/<N>` replaces the whole body: re-fetch immediately before editing and keep everything unrelated verbatim — never PATCH from a cached body.
-- Token hygiene is the same as the CI rule: `<REPO>_GH_TOKEN` (e.g. `MYPROJECT_GH_TOKEN`) lives in `~/.Renviron` (chmod 600) — never write the token value into the repo, workspace files, or logs.
+- Token hygiene: the operator token file is `$XDG_CONFIG_HOME/issue-pipeline/github-token` (one line, file 600, directory 700); a project may also provide `<REPO>_GH_TOKEN` in its environment — never write the token value into the repo, workspace files, or logs.
 
 ## Lifecycle
 

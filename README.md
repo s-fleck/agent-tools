@@ -30,7 +30,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/r-data-table` | `data.table` semantics and footguns | the package uses `data.table` |
 | `skills/changelog-style-guide` | Keep a Changelog for non-R projects | a non-R project |
 | `skills/semver` | SemVer version bumps for releases — **companion**, vendor with either changelog skill | any project that releases |
-| `skills/github-issue` | issue composition plus the self-contained GitHub REST helper (`gh.py`, vendored with the skill directory) | the project files issues on GitHub |
+| `skills/github-issue` | issue composition plus the self-contained GitHub REST helper (`github-rest.py`, vendored with the skill directory) | the project files issues on GitHub |
 | `skills/issue-comment` | post-solve issue comments | ditto |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
 | `skills/skill-update` | amending, versioning, renaming, and syncing back skills; the metadata contract for variants | the project amends its own copies |
