@@ -15,7 +15,6 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/<name>/` | `<project>/.opencode/skills/<name>/` |
 | `commands/*.md` | `<project>/.opencode/commands/` |
 | `agents/*.md` | `<project>/.opencode/agent/` |
-| `scripts/check-docs.R` | `<project>/tools/check-docs.R` (or any scripts dir) |
 
 ## Contents
 
@@ -33,10 +32,9 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/github-issue` | issue composition plus the self-contained GitHub REST helper (`github-rest.py`, vendored with the skill directory) | the project files issues on GitHub |
 | `skills/issue-comment` | post-solve issue comments | ditto |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
-| `skills/skill-update` | amending, versioning, renaming, and syncing back skills; the metadata contract for variants | the project amends its own copies |
+| `skills/skill-update` | amending, versioning, renaming, and syncing back skills; pulling upstream into a variant; the metadata contract for variants | the project amends its own copies |
 | `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change; `/issue-to-spec auto` picks and implements one | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
 | `agents/spec-reviewer` | read-only OpenSpec change reviewer | ditto |
-| `scripts/check-docs.R` | markdown cross-reference checker (links, anchors, `file:line`, `§`, `Status:` headers): `Rscript tools/check-docs.R` from the repo root; CI-ready (exit 1 on errors). Base R only. | the project has markdown docs |
 
 ## Skill versioning
 

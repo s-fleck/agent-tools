@@ -31,7 +31,7 @@ name as the area prefix.
 - **r-data-table:** Rename `data-table` to `r-data-table` so R-specific skills carry the `r-` prefix (2.0.0)
 - **r-news-styleguide:** Delegate the version bump to the `semver` skill; `NEWS.md` now owns the R-specific timing, promotion, and `DESCRIPTION` sync only (2.0.0)
 - **r-package-style-guide:** Point at the renamed `r-data-table` skill (3.0.1)
-- **skill-update:** Hardcode the canonical repo (`https://github.com/s-fleck/agent-tools`) and its local checkout (`~/workspace/agent-tools`) in place of the `<skill-repo>` placeholder, reference the `semver` skill as the general versioning policy, and require non-`r-` skills to stay language-neutral (2.0.0)
+- **skill-update:** Rework the variant lifecycle: distinguish stale copies from variants, record the actual vendoring base in `upstream`, reset semver components correctly, split canonical and project validation, add pull-upstream and drift-check procedures, and require README/cross-reference updates on create, rename, and fork; keep the fixed canonical checkout, `semver` delegation, and language-neutral rule (3.0.0)
 
 ## [0.2.1] - 2026-10-21
 
