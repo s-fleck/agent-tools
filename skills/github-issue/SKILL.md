@@ -10,7 +10,7 @@ Compose issues for the project's issue registry. AGENTS.md rules apply (registry
 
 ## Body
 
-1. Search the open issues first (`github-rest.py --paginate GET "/issues?state=open&per_page=100"`): if the same scope and topic exists, refine that issue or link it (`Refines #N`, `Supersedes #N`) instead of filing a duplicate.
+1. Search the open issues first (`github-rest.py --paginate GET "/issues?state=open&per_page=100"`, ignoring entries with a `pull_request` field): if the same scope and topic exists, refine that issue or link it (`Refines #N`, `Supersedes #N`) instead of filing a duplicate.
 2. Use the project's section skeleton (default: `**Problem**` / `**Fix**` / `**Rulings**` / `**Done when**` / `**Out of scope**`).
 3. Delete sections that stay empty before filing. Aim for under ~40 lines; if the evidence itself will not fit, split the issue rather than cutting the evidence.
 4. Fill the sections:
