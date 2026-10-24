@@ -32,7 +32,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/github-issue` | issue composition plus the self-contained GitHub REST helper (`github-rest.py`, vendored with the skill directory) | the project files issues on GitHub |
 | `skills/issue-comment` | post-solve issue comments | ditto |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
-| `skills/skill-update` | amending, versioning, renaming, and syncing back skills; pulling upstream into a variant; the metadata contract for variants | the project amends its own copies |
+| `skills/skill-update` | amending, versioning, renaming, syncing back skills; pulling upstream into a variant; parallel-safe canonical landings; the metadata contract for variants | the project amends its own copies |
 | `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change; `/issue-to-spec auto` picks and implements one | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
 | `agents/spec-reviewer` | read-only OpenSpec change reviewer | ditto |
 
@@ -48,16 +48,18 @@ Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metada
   ```yaml
   metadata:
     author: Stefan Fleck
-    version: 3.0.0+acme.1      # upstream version + local amendment counter
-    variant: acme             # the project that owns the amendments
-    upstream: r-package-style-guide@3.0.0
-    local_changes: "Problem: project-specific rule"
+    version: "4.0.0+acme.1"      # upstream version + local amendment counter
+    variant: acme               # the project that owns the amendments
+    upstream: r-package-style-guide@4.0.0
+    upstream_commit: 4f3a2c1d9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f
+    local_changes: "Package name <project> instead of <pkg>; release timing defers to the project release skill"
   ```
 
-  The `+<project>.<n>` suffix is semver build metadata — the base tracks upstream, the counter tracks local amendments. Re-vendoring resets the counter.
+  The `+<project>.<n>` suffix is semver build metadata — the base tracks upstream, the counter tracks local amendments. Re-vendoring resets the counter. `upstream_commit` records the exact canonical commit the copy was vendored from; it is required for new variants and on re-vendor.
 - **An overlay is vendored next to its base skill.** `r-package-style-guide-rlang` overrides one section of `r-package-style-guide`; copying both leaves the base's metadata untouched. A project that amends the overlay itself records it as a variant of the overlay skill, not of the base.
 - **Project-specific rules live in the project copy**; the canonical copy stays generic. Genericize the lesson when syncing back — keep the rule, drop the project's names, paths, and tokens.
 - **Rename the folder and the frontmatter `name` together** when a project copy is renamed; the canonical name stays in `upstream`. A rename in this repo is a MAJOR bump.
+- **Canonical changes land through a fetch/rebase loop.** See `skill-update` for the parallel-safe landing procedure (per-session worktree, rebase, re-validate, push with retry). Versions are allocated when the change reaches `origin/master`, not at edit time.
 
 ## Conventions
 
@@ -77,7 +79,6 @@ cp -r skills/semver "$P/.opencode/skills/"                # with either changelo
 cp -r skills/skill-update "$P/.opencode/skills/"          # whenever the project amends its copies
 cp agents/spec-reviewer.md "$P/.opencode/agent/"
 cp commands/issue-to-spec.md "$P/.opencode/commands/"
-cp scripts/check-docs.R "$P/tools/"
 ```
 
 **Overlays ship with their base.** `r-package-style-guide-rlang` only means something next to `r-package-style-guide` — copy both, and only when the package depends on rlang:
@@ -87,7 +88,7 @@ cp -r skills/r-package-style-guide skills/r-package-style-guide-rlang "$P/.openc
 ```
 
 **Changelog skills ship with `semver`.** Both `r-news-styleguide` and
-`changelog-style-guide` delegate the version decision to `semver` — copy it
+`changelog-style-guide` delegate the version bump to `semver` — copy it
 alongside either one.
 
 **Then restart opencode.** Skills, agents, and commands are read at startup; a running session keeps the set it started with. After the restart, verify what was picked up:
@@ -106,5 +107,5 @@ without the global set entirely: `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`.
 
 A copy stays byte-identical until the project amends it. The first amendment
 turns it into a variant: bump the version suffix, set `variant`, `upstream`,
-and `local_changes` in the copy's frontmatter, and note the rule in the
+`upstream_commit`, and `local_changes` in the copy's frontmatter, and note the rule in the
 project's `AGENTS.md`. See `skills/skill-update`.

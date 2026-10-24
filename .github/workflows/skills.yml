@@ -1,0 +1,47 @@
+name: Skill Validation
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'skills/**'
+      - 'CHANGELOG.md'
+      - 'README.md'
+      - '.github/workflows/skills.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate Skills
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate canonical repo
+        run: |
+          python skills/skill-update/check_skill.py --repo . --strict
+
+      - name: Validate each skill's version bump on push
+        run: |
+          # Find which skills changed in this push
+          CHANGED=$(git diff --name-only HEAD~1 HEAD -- skills/*/SKILL.md 2>/dev/null | sed -E 's|skills/([^/]+)/.*|\1|' | sort -u)
+          for skill in $CHANGED; do
+            if [ -n "$skill" ] && [ -d "skills/$skill" ]; then
+              echo "Checking bump for $skill..."
+              python skills/skill-update/check_skill.py --check-bump "$skill" --base origin/master || exit 1
+            fi
+          done
+        shell: bash
+
+  # Optional: validate project variants if they're in the repo
+  # (not applicable for agent-tools itself, but the workflow exists for downstream projects)

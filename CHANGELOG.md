@@ -34,6 +34,7 @@ name as the area prefix.
 - **r-news-styleguide:** Delegate the version bump to the `semver` skill; `NEWS.md` now owns the R-specific timing, promotion, and `DESCRIPTION` sync only (2.0.0)
 - **r-package-style-guide:** Point at the renamed `r-data-table` skill (3.0.1)
 - **skill-update:** Rework the variant lifecycle: distinguish stale copies from variants, record the actual vendoring base in `upstream`, reset semver components correctly, split canonical and project validation, add pull-upstream and drift-check procedures, and require README/cross-reference updates on create, rename, and fork; keep the fixed canonical checkout, `semver` delegation, and language-neutral rule (3.0.0)
+- **skill-update:** Add the parallel-landing procedure (per-session worktree, fetch/rebase/re-bump, changelog reconciliation, duplicate-lesson check), record the exact `upstream_commit` in variant metadata, and ship a skill metadata checker plus CI (4.0.0)
 
 ## [0.2.1] - 2026-10-21
 
