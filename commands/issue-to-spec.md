@@ -7,7 +7,7 @@ Drive GitHub issue `$ARGUMENTS` from triage to a reviewed OpenSpec change ready 
 
 **Auto mode:** `/issue-to-spec auto` selects the best issue that needs no human input, runs the same flow unattended, then implements it via the `openspec-apply-change` skill. Details at the bottom of this file.
 
-**Input:** the issue number (e.g. `42`), an issue URL, or `auto` (see Auto mode). If `$ARGUMENTS` is empty, fetch the open issues (`GET /issues?state=open&per_page=100`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark product-direction issues (`product`, or the project's equivalent such as `idea`) in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
+**Input:** the issue number (e.g. `42`), an issue URL, or `auto` (see Auto mode). If `$ARGUMENTS` is empty, fetch the open issues (`--paginate GET "/issues?state=open&per_page=100"`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark product-direction issues (`product`, or the project's equivalent such as `idea`) in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
 
 ## GitHub access
 
@@ -96,7 +96,7 @@ For remaining findings that require a real decision (scope, behavior, tradeoffs,
 
 No issue number needed, and the run does not stop before implementation. Questions still pause the run when a human decision is genuinely required.
 
-**Selection** — fetch `GET /issues?state=open&per_page=100` and pick the best eligible issue:
+**Selection** — fetch `--paginate GET "/issues?state=open&per_page=100"` and pick the best eligible issue:
 - Exclude: PR entries, product-direction issues (`product`/`idea`), `needs-ruling` issues, `draft` issues (stubs need an interactive rewrite), issues with unresolved ⚖ items or explicit open questions in body/comments, issues spanning several independent subsystems, issues too vague to spec without guessing.
 - Prefer explicit acceptance criteria ("Done when"), then priority labels per the project conventions (e.g. `P1` > `P2` > `P3` > unlabeled), then lowest issue number.
 - Skip issues that already carry a `Change: <id>` link: an active `openspec/changes/<id>/` may be mid-flight in another session, and an archived one is effectively solved. Both stay available via the explicit `/issue-to-spec <N>` path.
