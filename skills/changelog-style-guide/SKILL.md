@@ -7,20 +7,23 @@ description: >
   prefixes, imperative mood, breaking changes and unreleased consolidation.
 metadata:
   author: Stefan Fleck
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Changelog Style Guide
 
 Changelogs follow [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Entries are written
-for users reading a release, not for developers reviewing commits.
+for users reading a release, not for developers reviewing commits. The version
+number itself comes from the `semver` skill; this guide covers the entry and
+the release block.
 
 ## When To Use
 
 - Adding an entry for work just finished.
 - Editing or consolidating the `[Unreleased]` section.
-- Cutting a release (turning `[Unreleased]` into a version block).
+- Cutting a release (turning `[Unreleased]` into a version block) — choose the
+  version with the `semver` skill.
 - Reviewing a changelog for style conformance.
 
 ## The Unreleased Section Is Not A Development Log
@@ -109,6 +112,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Within a section, sort by area name alphabetically, then by importance.
   Entries with no area prefix sort first.
 
+## Cutting A Release
+
+Turn `[Unreleased]` into a dated version block and open a fresh `[Unreleased]`
+above it:
+
+```markdown
+## [Unreleased]
+
+## [0.14.0] - 2026-07-02
+```
+
+Choose the version with the `semver` skill: a release takes the highest bump
+its entries require. Keep the version in the project manifest and the git tag
+in sync with the heading.
+
 ## Writing Entries
 
 - **Imperative mood** — "Fix crash", never "Fixed crash" or "Fixes crash".
@@ -195,6 +213,7 @@ Verify before finishing any changelog edit:
 7. Breaking changes carry the `**Breaking:**` prefix.
 8. `[Unreleased]` consolidated — one entry per feature, no pre-ship
    `Fixed`/`Changed` entries for features that haven't shipped.
+9. If this edit cuts a release, the version follows the `semver` skill.
 
 ## Red Flags — Stop And Reconsider
 
@@ -204,3 +223,4 @@ Verify before finishing any changelog edit:
 - Your entry starts with a past-tense verb.
 - You described a breaking change without the `**Breaking:**` prefix.
 - You added to `[Unreleased]` without re-reading the rest of the section.
+- You picked a release version without consulting the `semver` skill.

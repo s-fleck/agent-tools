@@ -7,14 +7,16 @@ description: >
   mood, breaking changes, unreleased consolidation, and pre-commit validation.
 metadata:
   author: Stefan Fleck
-  version: "1.3.0"
+  version: "2.0.0"
 ---
 
 # R NEWS.md Style Guide
 
 This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) 
 principles and [Semantic Versioning](https://semver.org/spec/v2.0.0.html), 
-adapted to the heading structure R itself expects for `NEWS.md` files.
+adapted to the heading structure R itself expects for `NEWS.md` files. The
+version number itself comes from the `semver` skill; this guide covers the
+R-specific structure and the completion workflow.
 
 This is an R package, so the changelog lives in `NEWS.md` at the package root 
 (R's naming convention) rather than `CHANGELOG.md`. All rules below apply to `NEWS.md`.
@@ -115,7 +117,7 @@ Example NEWS.md:
 
 13. **No extra top-level headings** — never add a `# Changelog`/`# NEWS` title or any other `#` heading besides version headers. If you want an intro sentence ("All notable changes..."), put it as plain text with no heading, before the first version block.
 
-14. **Version bump on completion** — every completed change bumps the version and promotes the development block to a dated `# <pkg> x.y.z (YYYY-MM-DD)` heading (rule 2), then resets `# <pkg> (development version)`. A user-visible change (`Added`/`Changed`/`Removed`/`Fixed`/`Deprecated`; `Security` by severity) bumps the **minor** version; an internal-only or docs-only change bumps the **patch** version. This complements rules 1–2 (development block, version header); keep `DESCRIPTION` `Version:` in sync with the newest dated heading.
+14. **Version bump on completion** — every completed change bumps the version and promotes the development block to a dated `# <pkg> x.y.z (YYYY-MM-DD)` heading (rule 2), then resets `# <pkg> (development version)`. Choose the bump with the `semver` skill: the release takes the highest bump its entries require (breaking, including removal of public API → major; `Added`/`Deprecated`/backwards-compatible `Changed` → minor; `Fixed`/internal-only/docs-only → patch; `Security` by effect). Keep `DESCRIPTION` `Version:` in sync with the newest dated heading.
 
 ## Prose Style
 

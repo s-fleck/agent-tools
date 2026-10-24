@@ -3,12 +3,12 @@ name: skill-update
 description: Use when changing a skill — amending a project copy with project-specific rules, marking a copy as a variant, bumping a skill's version, renaming or forking a skill, writing its changelog entry, or syncing a project's amendments back into the canonical skill repo.
 metadata:
   author: Stefan Fleck
-  version: "1.0.1"
+  version: "2.0.0"
 ---
 
 # Skill Update
 
-A skill exists in two places: the **canonical copy** in the skill repo (upstream) and the **project copy** a project vendored from it. This skill is the procedure for changing a skill without losing the difference between the two.
+A skill exists in two places: the **canonical copy** in the skill repo (upstream: <https://github.com/s-fleck/agent-tools>) and the **project copy** a project vendored from it. This skill is the procedure for changing a skill without losing the difference between the two.
 
 ## When To Use
 
@@ -21,7 +21,7 @@ A skill exists in two places: the **canonical copy** in the skill repo (upstream
 
 | Role | Lives in | Frontmatter |
 |------|----------|-------------|
-| Canonical | the skill repo's `skills/<name>/` | `author` + `version` only |
+| Canonical | `~/workspace/agent-tools/skills/<name>/` | `author` + `version` only |
 | Project copy | `<project>/.opencode/skills/<name>/` | `author` + `version`, plus `variant`/`upstream`/`local_changes` once amended |
 
 - The canonical copy is upstream. A project copy is upstream **plus** local amendments, and says so in its metadata.
@@ -29,16 +29,33 @@ A skill exists in two places: the **canonical copy** in the skill repo (upstream
 - Never edit a canonical copy from inside a project: amend the project copy, sync back later.
 - A project copy that no longer matches its upstream is a **variant** (see [Metadata Contract](#metadata-contract)).
 
+## The Canonical Repo
+
+The upstream location is fixed — do not parameterize it or guess another path:
+
+- **Repository:** <https://github.com/s-fleck/agent-tools>
+- **Local checkout:** `~/workspace/agent-tools`; the canonical copy of `<name>` is `~/workspace/agent-tools/skills/<name>/`.
+
+Both paths are hard-coded on purpose. If the checkout is missing, clone it:
+
+```bash
+git clone https://github.com/s-fleck/agent-tools ~/workspace/agent-tools
+```
+
+If it is missing and cannot be cloned, stop and ask — do not substitute another checkout or a stale copy of the repo.
+
+When the session's working directory is `~/workspace/agent-tools` itself, the canonical copy is the local file and there is no project copy to amend.
+
 ## Anatomy
 
 A skill is a directory `skills/<name>/` holding `SKILL.md`, plus optional `references/`, scripts, and assets. `SKILL.md` opens with YAML frontmatter:
 
 ```yaml
 ---
-name: r-package-style-guide          # required; matches the folder name, lowercase-hyphenated
+name: code-review                    # required; matches the folder name, lowercase-hyphenated
 description: Use when ...            # required; third person, covers what it does + when to trigger
 license: MIT                        # optional
-compatibility: Requires R >= 4.2    # optional
+compatibility: Requires <runtime> >= <version>    # optional
 metadata:                           # optional; flat string → string map, no nesting
   author: Stefan Fleck
   version: 3.0.0
@@ -64,10 +81,10 @@ Project copy with local amendments — three extra keys:
 ```yaml
 metadata:
   author: Stefan Fleck
-  version: 3.0.0+fire.1
-  variant: fire
-  upstream: r-package-style-guide@3.0.0
-  local_changes: "Problem: repro stamp and symbol refs; Lifecycle: OpenSpec change link"
+  version: 3.0.0+acme.1
+  variant: acme
+  upstream: code-review@3.0.0
+  local_changes: "Problem: project-specific rule; Lifecycle: project change link"
 ```
 
 - `variant` — the project that owns the amendments. Its presence is the signal that this copy is not upstream.
@@ -91,7 +108,9 @@ metadata:
 
 ## Versioning
 
-Every change to a skill bumps its version. Nothing ships unbumped.
+Every change to a skill bumps its version. Nothing ships unbumped. This is the
+`semver` skill applied to skill guidance: a skill's rules are its public API,
+so changing or removing one is MAJOR.
 
 | Change | Bump | Example |
 |--------|------|---------|
@@ -101,20 +120,20 @@ Every change to a skill bumps its version. Nothing ships unbumped.
 
 - Bump only the part that changed; leave the other components alone.
 - Never reuse a version number, not even after a revert.
-- A project copy's local amendments bump the suffix: `2.3.0+fire.1` → `2.3.0+fire.2`. The base still tracks upstream.
-- Re-vendoring resets the suffix: after pulling upstream 2.4.0 in and re-applying the local amendments, the copy is `2.4.0+fire.1`.
+- A project copy's local amendments bump the suffix: `2.3.0+acme.1` → `2.3.0+acme.2`. The base still tracks upstream.
+- Re-vendoring resets the suffix: after pulling upstream 2.4.0 in and re-applying the local amendments, the copy is `2.4.0+acme.1`.
 - A rename in the canonical repo is a MAJOR bump; the changelog entry names the old skill.
 
 ## Changelog
 
-- The canonical repo keeps one `CHANGELOG.md` at its root, in Keep a Changelog + semver form, per the `changelog-style-guide` skill.
+- The canonical repo keeps one changelog at `~/workspace/agent-tools/CHANGELOG.md`, in Keep a Changelog + semver form, per the `changelog-style-guide` skill.
 - Every skill version bump gets an entry under `[Unreleased]`, with the skill name as the area prefix.
 - Entry shape: `- **<skill>:** <imperative summary> (<new version>)`.
 - A project copy's local amendments are recorded in the **project's** changelog, not the canonical one. The canonical changelog records only what landed upstream.
 
 ## Amending a Project Copy
 
-1. Read the canonical copy and the project copy; diff them before editing.
+1. Read the canonical copy at `~/workspace/agent-tools/skills/<name>/` and the project copy; diff them before editing.
 2. Make the smallest edit that states the project's rule. Keep the generic part generic — a project rule belongs in the project copy, not in every copy of the skill.
 3. Bump the suffix, set `upstream` to the canonical version, refresh `local_changes`.
 4. If the amendment is a project-wide rule, add a one-line pointer to it in the project's `AGENTS.md` — the skill holds the detail, AGENTS.md points at the skill.
@@ -122,7 +141,7 @@ Every change to a skill bumps its version. Nothing ships unbumped.
 
 ## Syncing Back to Canonical
 
-1. Diff: `diff -ru <skill-repo>/skills/<name> <project>/.opencode/skills/<name>`.
+1. Diff: `diff -ru ~/workspace/agent-tools/skills/<name> <project>/.opencode/skills/<name>`.
 2. Classify every hunk:
    - **Generic** — the rule holds for any project → move to the canonical copy.
    - **Project-specific** — names a project file, function, path, token, or convention → stays in the project. Genericize the *lesson* into the canonical copy (keep the rule, drop the names) and keep the names in the project copy.
@@ -130,12 +149,11 @@ Every change to a skill bumps its version. Nothing ships unbumped.
 3. Apply to the canonical copy: minimal diff, generic wording, no project names, no tokens.
 4. Bump the canonical version per the table above and add the changelog entry.
 5. Re-vendor the canonical copy into the project and re-apply the local amendments: reset the suffix to `+<project>.1`, refresh `upstream` and `local_changes`.
-6. Verify: `Rscript scripts/check-docs.R` in the canonical repo, then grep the canonical copy for project names, paths, and tokens.
 
 ## Renaming and Forking
 
 - A renamed project copy: rename the folder **and** the frontmatter `name` together, and keep the canonical name in `upstream`. The canonical repo keeps its own name; a rename in the canonical repo is a MAJOR bump.
-- A fork that outgrew the canonical skill gets its own name, its own directory, and its own canonical entry in the skill repo. The original stays as it is.
+- A fork that outgrew the canonical skill gets its own name, its own directory, and its own canonical entry in `~/workspace/agent-tools/skills/`. The original stays as it is.
 - A fork is not a variant: variants carry `variant`/`upstream`; a fork is a separate skill with its own history.
 
 ## Creating a Skill
@@ -153,12 +171,13 @@ Before finishing any skill change:
 3. A project copy carries `variant`, `upstream`, `local_changes`; a canonical copy carries none of them.
 4. A changelog entry exists under `[Unreleased]`.
 5. The canonical copy is free of project-specific names, paths, and tokens.
-6. `Rscript scripts/check-docs.R` reports no errors.
+6. The canonical repo's documented doc check reports no errors.
 7. Project copies that were re-vendored have an updated `upstream` and a reset suffix.
 
 ## Red Flags — Stop And Reconsider
 
 - You are editing the canonical copy while working inside a project.
+- You are editing a checkout of the upstream repo other than `~/workspace/agent-tools`.
 - A project copy diverges from upstream but carries no `variant` marker — the next sync will not know what to pull back.
 - The version changed but no changelog entry was written.
 - A project path, function name, or token reached the canonical copy.

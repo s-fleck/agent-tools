@@ -3,7 +3,7 @@ name: doc-rewrite
 description: Use when reviewing, tightening, or rewriting a named document or section — specs, ADRs, READMEs, guides, architecture docs. Scoped procedure: verify claims against code, repair references, minimal edits. Not for OpenSpec change artifacts.
 metadata:
   author: Stefan Fleck
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 # Scoped documentation review
@@ -12,7 +12,7 @@ Review one document (or one named section) per invocation. "Review all docs" in 
 
 ## 0. Preflight
 
-- Run the project's doc checker if one exists (e.g. `Rscript tools/check-docs.R`); its findings seed the inventory.
+- Run the project's doc checker if one exists (see the project's AGENTS.md/README for the command); its findings seed the inventory.
 - Fix the scope from the request or the issue; if none is given, list the docs and ask which one. Read the document fully, plus the code and paths it references.
 - OpenSpec change artifacts (`openspec/changes/**`) are reviewed by the `spec-reviewer` subagent — not here.
 

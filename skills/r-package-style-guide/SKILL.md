@@ -6,7 +6,7 @@ description: >
   functions, formatting, data.table, prohibited packages).
 metadata:
   author: Stefan Fleck
-  version: "3.0.0"
+  version: "3.0.1"
 ---
 
 # R Package Style Guide
@@ -104,5 +104,5 @@ iris |> data.table::setnames(sfmisc::pascal_case(names(iris)))
 ```
 
 **data.table semantics** — scoping (`i`/`j`, column-name shadowing), joins,
-by-reference updates and key types — are covered by the `data-table` skill. This
+by-reference updates and key types — are covered by the `r-data-table` skill. This
 section only covers style.

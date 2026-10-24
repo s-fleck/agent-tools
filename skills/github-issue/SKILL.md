@@ -3,7 +3,7 @@ name: github-issue
 description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style. Also carries the self-contained GitHub REST helper used by the issue-to-spec command.
 metadata:
   author: Stefan Fleck
-  version: "1.0.0"
+  version: "1.0.1"
 ---
 
 Compose issues for the project's issue registry. AGENTS.md rules apply (registry policy wins); this skill is the how-to.
@@ -13,7 +13,7 @@ Compose issues for the project's issue registry. AGENTS.md rules apply (registry
 1. Use the project's section skeleton (default: `**Problem**` / `**Fix**` / `**Rulings**` / `**Done when**` / `**Out of scope**`).
 2. Delete sections that stay empty before filing. Keep the body under ~40 lines.
 3. Fill the sections:
-   - **Problem** — what is wrong or missing, and why it matters. `file:line` plus the enclosing symbol for code (lines rot; symbols are greppable — e.g. `R/parse-amount.R` line 138, symbol `parse_amount_de`); doc name + `§` for binding docs. Verify behavioral claims against the current codebase before filing — repro or inspection, stated in one line with the model (e.g. `repro 2026-10-20 (model: <name>)`); that stamp doubles as the issue's signature — no end-of-body signature line; verify old refs still resolve before trusting them. State the measured numbers, not the expected direction: a mechanism can move a figure up or down, so a claim like "the figures dip" needs its sign checked against the real data.
+   - **Problem** — what is wrong or missing, and why it matters. `file:line` plus the enclosing symbol for code (lines rot; symbols are greppable — e.g. `path/to/file` line 138, symbol `parse_amount`); doc name + `§` for binding docs. Verify behavioral claims against the current codebase before filing — repro or inspection, stated in one line with the model (e.g. `repro 2026-10-20 (model: <name>)`); that stamp doubles as the issue's signature — no end-of-body signature line; verify old refs still resolve before trusting them. State the measured numbers, not the expected direction: a mechanism can move a figure up or down, so a claim like "the figures dip" needs its sign checked against the real data.
    - **Fix** — concrete task list (`- [ ]`); name the required spec delta inline (project notation, e.g. `Δspec: <capability>`).
    - **Rulings** — ⚖ only decisions that need the owner: options + one recommendation. Resolved by editing this section; `needs-ruling` label while undecided.
    - **Done when** — machine-checkable acceptance: tests that must exist/pass, commands to run, doc bumps.
@@ -26,7 +26,7 @@ When composing in chat, output the issue markdown only — no commentary around 
 
 ## GitHub REST helper
 
-`gh.py` (next to this file) is self-contained: derives `owner/repo` from `git remote get-url origin`, resolves the token per the project convention (`<REPO>_GH_TOKEN` in `~/.Renviron`, e.g. `FIRE_GH_TOKEN`; fallback `GH_TOKEN`/`GITHUB_TOKEN`; never printed or logged). Call it directly — no heredoc:
+`gh.py` (next to this file) is self-contained: derives `owner/repo` from `git remote get-url origin`, resolves the token per the project convention (`<REPO>_GH_TOKEN` in `~/.Renviron`, e.g. `MYPROJECT_GH_TOKEN`; fallback `GH_TOKEN`/`GITHUB_TOKEN`; never printed or logged). Call it directly — no heredoc:
 
 ```bash
 python3 .opencode/skills/github-issue/gh.py GET /issues/42
@@ -39,7 +39,7 @@ python3 .opencode/skills/github-issue/gh.py DELETE /issues/42/labels/needs-rulin
 
 - A file argument ending in `.json` is sent as the raw payload (e.g. creating an issue); anything else (`.md`) is wrapped as `{"body": <text>}` (comments, body updates).
 - `PATCH /issues/<N>` replaces the whole body: re-fetch immediately before editing and keep everything unrelated verbatim — never PATCH from a cached body.
-- Token hygiene is the same as the CI rule: `<REPO>_GH_TOKEN` (e.g. `FIRE_GH_TOKEN`) lives in `~/.Renviron` (chmod 600) — never write the token value into the repo, workspace files, or logs.
+- Token hygiene is the same as the CI rule: `<REPO>_GH_TOKEN` (e.g. `MYPROJECT_GH_TOKEN`) lives in `~/.Renviron` (chmod 600) — never write the token value into the repo, workspace files, or logs.
 
 ## Lifecycle
 

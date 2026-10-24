@@ -1,5 +1,5 @@
 ---
-name: data-table
+name: r-data-table
 description: >
   data.table semantics and footguns: i/j scoping and column-name shadowing,
   joins, by-reference updates, keys and type coercion. Use when writing or
@@ -7,7 +7,7 @@ description: >
   rows or silently mutates its input.
 metadata:
   author: Stefan Fleck
-  version: "1.0.0"
+  version: "2.0.0"
 ---
 
 # data.table semantics

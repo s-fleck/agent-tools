@@ -5,7 +5,7 @@
 Canonical copies of opencode tooling (skills, commands, subagents, checks) that projects **copy from** when needed. It is deliberately not a live tool directory:
 
 - Do **not** add this repo to `skills.paths`, `~/.agents/skills/`, or any other auto-discovery location — agents should only see the tools a project actually vendored.
-- Selection is per project; not everything fits everywhere. Example: R package repos take `r-news-styleguide`, other projects take `changelog-style-guide`.
+- Selection is per project; not everything fits everywhere. Example: R package repos take `r-news-styleguide` + `semver`, other projects take `changelog-style-guide` + `semver`.
 - Vendored copies start byte-identical to this repo. A copy that later takes project-specific amendments is marked as a **variant** in its metadata — see [Skill versioning](#skill-versioning).
 
 ## Layout → destination
@@ -26,9 +26,10 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/r-package-style-guide-rlang` | rlang error rules — **overlay**, needs the base skill alongside it | the package depends on rlang |
 | `skills/r-package-testing` | testthat 3 patterns, fixtures, mocking, snapshots | any R package with tests |
 | `skills/r-roxygen` | roxygen2 documentation conventions | any R package |
-| `skills/r-news-styleguide` | `NEWS.md` conventions, version-bump rules | any R package |
-| `skills/data-table` | `data.table` semantics and footguns | the package uses `data.table` |
+| `skills/r-news-styleguide` | `NEWS.md` conventions and the completion-time promotion rule | any R package |
+| `skills/r-data-table` | `data.table` semantics and footguns | the package uses `data.table` |
 | `skills/changelog-style-guide` | Keep a Changelog for non-R projects | a non-R project |
+| `skills/semver` | SemVer version bumps for releases — **companion**, vendor with either changelog skill | any project that releases |
 | `skills/github-issue` | issue composition plus the self-contained GitHub REST helper (`gh.py`, vendored with the skill directory) | the project files issues on GitHub |
 | `skills/issue-comment` | post-solve issue comments | ditto |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
@@ -41,7 +42,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 
 Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metadata.author`. Rules, in short — the `skill-update` skill is the procedure:
 
-- **Every change to a skill bumps its version.** PATCH for wording and fixes, MINOR for new guidance, MAJOR for a changed or removed rule, a changed frontmatter contract, or a rename.
+- **Every change to a skill bumps its version.** PATCH for wording and fixes, MINOR for new guidance, MAJOR for a changed or removed rule, a changed frontmatter contract, or a rename. `semver` covers project/package release versions; skill versions follow this table via `skill-update`.
 - **A fork keeps the original author's credit.** `metadata.author` is a comma-separated list, original author first: `author: "Garrick Aden-Buie (@gadenbuie), Stefan Fleck"`. Amendments add to the list, they never replace it. Carry the upstream `license:` line into the fork.
 - **Every version bump gets a `CHANGELOG.md` entry** under `[Unreleased]`, area prefix = skill name. The repo follows its own `changelog-style-guide`.
 - **A project copy with local amendments is a variant** and says so:
@@ -49,10 +50,10 @@ Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metada
   ```yaml
   metadata:
     author: Stefan Fleck
-    version: 3.0.0+fire.1      # upstream version + local amendment counter
-    variant: fire             # the project that owns the amendments
+    version: 3.0.0+acme.1      # upstream version + local amendment counter
+    variant: acme             # the project that owns the amendments
     upstream: r-package-style-guide@3.0.0
-    local_changes: "Problem: repro stamp and symbol refs"
+    local_changes: "Problem: project-specific rule"
   ```
 
   The `+<project>.<n>` suffix is semver build metadata — the base tracks upstream, the counter tracks local amendments. Re-vendoring resets the counter.
@@ -74,6 +75,7 @@ P=/path/to/project
 mkdir -p "$P/.opencode/skills" "$P/.opencode/agent" "$P/.opencode/commands" "$P/tools"
 cp -r skills/github-issue skills/issue-comment "$P/.opencode/skills/"
 cp -r skills/r-news-styleguide "$P/.opencode/skills/"   # pick per project, e.g. R packages
+cp -r skills/semver "$P/.opencode/skills/"                # with either changelog skill
 cp -r skills/skill-update "$P/.opencode/skills/"          # whenever the project amends its copies
 cp agents/spec-reviewer.md "$P/.opencode/agent/"
 cp commands/issue-to-spec.md "$P/.opencode/commands/"
@@ -85,6 +87,10 @@ cp scripts/check-docs.R "$P/tools/"
 ```bash
 cp -r skills/r-package-style-guide skills/r-package-style-guide-rlang "$P/.opencode/skills/"
 ```
+
+**Changelog skills ship with `semver`.** Both `r-news-styleguide` and
+`changelog-style-guide` delegate the version decision to `semver` — copy it
+alongside either one.
 
 **Then restart opencode.** Skills, agents, and commands are read at startup; a running session keeps the set it started with. After the restart, verify what was picked up:
 
