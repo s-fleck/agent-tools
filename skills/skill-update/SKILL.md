@@ -8,7 +8,7 @@ description: >
   canonical skill repo. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "4.0.1"
+  version: "4.0.2"
 ---
 
 # Skill Update
@@ -162,7 +162,7 @@ license: MIT                         # optional
 compatibility: Requires <runtime> >= <version>    # optional
 metadata:                            # optional; flat string → string map, no nesting
   author: Stefan Fleck
-  version: "4.0.1"
+  version: "4.0.2"
 ---
 ```
 
@@ -177,7 +177,7 @@ Canonical copy — no project markers:
 ```yaml
 metadata:
   author: Stefan Fleck
-  version: "4.0.1"
+  version: "4.0.2"
 ```
 
 Project copy with local amendments — four extra keys:

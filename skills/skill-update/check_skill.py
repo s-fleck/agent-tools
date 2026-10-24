@@ -111,7 +111,7 @@ def parse_frontmatter(path: Path) -> Frontmatter:
     return fm
 
 
-def run_git(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess:
+def run_git(args: list[str], cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(["git"] + args, cwd=cwd, capture_output=True, text=True)
 
 
