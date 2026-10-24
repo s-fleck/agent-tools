@@ -17,8 +17,10 @@ import subprocess
 import sys
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 
 API_BASE = 'https://api.github.com'
@@ -31,10 +33,19 @@ RETRY_JITTER = 0.5
 RETRY_MAX_DELAY = 8.0
 RETRY_MAX_AFTER = 60.0
 METHODS = ('GET', 'POST', 'PATCH', 'PUT', 'DELETE')
+IDEMPOTENT_METHODS = ('GET', 'PUT', 'PATCH', 'DELETE')
 
 
 class HelperError(RuntimeError):
     """A terminal, user-facing failure; `main` reports it and exits nonzero."""
+
+
+@dataclass(frozen=True)
+class Response:
+    """One successful response: the body to print and the headers to inspect."""
+
+    body: bytes
+    headers: dict[str, str]
 
 
 def token_file() -> Path:
@@ -105,6 +116,11 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
             '`gh` CLI.'
         ),
     )
+    parser.add_argument(
+        '--paginate',
+        action='store_true',
+        help='follow Link rel=next on a GET list endpoint and print one JSON array',
+    )
     parser.add_argument('method', choices=METHODS, help='HTTP method')
     parser.add_argument('path', help='API path starting with /, for example /issues/42')
     parser.add_argument(
@@ -138,6 +154,18 @@ def _retry_after(err: urllib.error.HTTPError) -> int | None:
         return None
 
 
+def _is_rate_limited(err: urllib.error.HTTPError) -> bool:
+    """A 429, or a 403 that GitHub marks as a rate limit rather than a permission."""
+    if err.code == 429:
+        return True
+    if err.code != 403 or err.headers is None:
+        return False
+    return (
+        err.headers.get('Retry-After') is not None
+        or err.headers.get('X-RateLimit-Remaining') == '0'
+    )
+
+
 def _sleep_backoff(attempt: int, retry_after: int | None) -> None:
     """Sleep before the next attempt: honored Retry-After, else jittered backoff."""
     if retry_after is not None:
@@ -159,22 +187,60 @@ def _http_error_message(err: urllib.error.HTTPError) -> str:
     return f'HTTP {err.code}: {err.reason}'
 
 
-def _request(
-    slug: str,
-    token: str,
-    method: str,
-    path: str,
-    payload: str | None,
-) -> bytes:
-    """Send one request with bounded transient retry; return the response body.
+def _unsafe_retry_message(method: str, reason: str) -> str:
+    """Explain why a non-idempotent write is not retried."""
+    return (
+        f'{reason} during {method}; not retried because a retry could duplicate '
+        'the write — check whether it landed before retrying'
+    )
 
-    Transient (retried up to RETRY_ATTEMPTS): transport-level failures
-    (URLError, timeouts, dropped connections) and HTTP 5xx; on 429 an integer
-    Retry-After is honored, capped at RETRY_MAX_AFTER. Every other status —
-    including a native 404 — is a terminal answer, never retried.
+
+def _url(slug: str, path: str) -> str:
+    """API URL for one repository-relative path."""
+    return API_BASE + '/repos/' + slug + path
+
+
+def _header(headers: dict[str, str], name: str) -> str | None:
+    """Case-insensitive header lookup over a plain dict."""
+    wanted = name.lower()
+    for key, value in headers.items():
+        if key.lower() == wanted:
+            return value
+    return None
+
+
+def _next_link(headers: dict[str, str]) -> str | None:
+    """Extract the `rel="next"` URL from a Link header, if one is present."""
+    link = _header(headers, 'Link')
+    if not link:
+        return None
+    for part in link.split(','):
+        if 'rel="next"' not in part:
+            continue
+        match = re.search(r'<([^>]+)>', part)
+        if match:
+            return match.group(1)
+    return None
+
+
+def _same_api_host(url: str) -> bool:
+    """True when a pagination URL points at the configured API host."""
+    base = urllib.parse.urlsplit(API_BASE)
+    target = urllib.parse.urlsplit(url)
+    return target.scheme == base.scheme and target.netloc == base.netloc
+
+
+def _request_url(url: str, token: str, method: str, payload: str | None) -> Response:
+    """Send one request with bounded transient retry; return the response.
+
+    Transient: rate limits (429, or 403 with a rate-limit marker) for every
+    method, and 5xx or transport errors for idempotent methods. A POST is never
+    retried after a 5xx or a transport error, because the write may have landed;
+    retrying it could duplicate an issue or a comment. Every other status —
+    including a native 404 and a permission 403 — is terminal.
     """
     req = urllib.request.Request(
-        API_BASE + '/repos/' + slug + path,
+        url,
         data=payload.encode('utf-8') if payload is not None else None,
         headers={
             'Authorization': 'Bearer ' + token,
@@ -184,18 +250,23 @@ def _request(
         },
         method=method,
     )
+    idempotent = method in IDEMPOTENT_METHODS
     attempt = 0
     while True:
         try:
             resp = urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT)
             try:
-                return resp.read()
+                return Response(resp.read(), dict(resp.headers.items()))
             finally:
                 resp.close()
         except urllib.error.HTTPError as err:
-            transient = err.code == 429 or err.code >= 500
-            if not transient:
+            rate_limited = _is_rate_limited(err)
+            if not rate_limited and err.code < 500:
                 raise HelperError(_http_error_message(err)) from err
+            if not rate_limited and not idempotent:
+                raise HelperError(
+                    _unsafe_retry_message(method, f'HTTP {err.code}')
+                ) from err
             if attempt + 1 >= RETRY_ATTEMPTS:
                 raise HelperError(
                     f'HTTP {err.code} persists after {RETRY_ATTEMPTS} attempts'
@@ -203,12 +274,45 @@ def _request(
             _sleep_backoff(attempt, _retry_after(err))
             attempt += 1
         except (OSError, http.client.HTTPException) as err:
+            if not idempotent:
+                raise HelperError(
+                    _unsafe_retry_message(method, f'network error: {err}')
+                ) from err
             if attempt + 1 >= RETRY_ATTEMPTS:
                 raise HelperError(
                     f'network error persists after {RETRY_ATTEMPTS} attempts: {err}'
                 ) from err
             _sleep_backoff(attempt, None)
             attempt += 1
+
+
+def _request(
+    slug: str,
+    token: str,
+    method: str,
+    path: str,
+    payload: str | None,
+) -> Response:
+    """Send one repository-relative request."""
+    return _request_url(_url(slug, path), token, method, payload)
+
+
+def _paginate(slug: str, token: str, path: str) -> bytes:
+    """Follow Link rel=next on a GET list endpoint and return one JSON array."""
+    url = _url(slug, path)
+    items: list[object] = []
+    while True:
+        response = _request_url(url, token, 'GET', None)
+        data = _decode_json(response.body)
+        if not isinstance(data, list):
+            return response.body
+        items.extend(data)
+        next_url = _next_link(response.headers)
+        if next_url is None:
+            return json.dumps(items).encode('utf-8')
+        if not _same_api_host(next_url):
+            raise HelperError(f'refusing to follow a pagination link outside {API_BASE}')
+        url = next_url
 
 
 def _decode_json(body: bytes) -> object | None:
@@ -247,8 +351,13 @@ def main(argv: Sequence[str] | None = None) -> int:
                 'chmod 600), set the per-repository <REPO>_GH_TOKEN, or set '
                 'GH_TOKEN/GITHUB_TOKEN'
             )
-        payload = _load_payload(args.payload)
-        body = _request(slug, token, args.method, args.path, payload)
+        if args.paginate:
+            if args.method != 'GET':
+                raise HelperError('--paginate is only valid for GET')
+            body = _paginate(slug, token, args.path)
+        else:
+            payload = _load_payload(args.payload)
+            body = _request(slug, token, args.method, args.path, payload).body
     except HelperError as err:
         print(err, file=sys.stderr)
         return 1

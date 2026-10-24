@@ -7,7 +7,7 @@ Drive GitHub issue `$ARGUMENTS` from triage to a reviewed OpenSpec change ready 
 
 **Auto mode:** `/issue-to-spec auto` selects the best issue that needs no human input, runs the same flow unattended, then implements it via the `openspec-apply-change` skill. Details at the bottom of this file.
 
-**Input:** the issue number (e.g. `42`), an issue URL, or `auto` (see Auto mode). If `$ARGUMENTS` is empty, fetch the open issues (`GET /issues?state=open&per_page=50`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark `product`-labeled issues in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
+**Input:** the issue number (e.g. `42`), an issue URL, or `auto` (see Auto mode). If `$ARGUMENTS` is empty, fetch the open issues (`GET /issues?state=open&per_page=100`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark product-direction issues (`product`, or the project's equivalent such as `idea`) in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
 
 ## GitHub access
 
@@ -42,11 +42,11 @@ Fetch issue + comments; read title, labels, body (sections per the project's con
 Then rename the session so it reflects the work for the rest of the run: run the rename command above with `#<N> <issue title trimmed to ~60 chars>` (e.g. `#42 scanner: widen host matching`). Do this before triage; if the rename call fails, note it once and continue. This title marks the work as *in progress* — the ✓ is added only when the change is finished (see **Session title on completion**).
 
 Guardrails:
-- Label `product` → stop and tell the user it routes to the project roadmap, not an OpenSpec change.
+- Label `product` (or the project's product-direction label, e.g. `idea`) → stop and tell the user it routes to the project roadmap, not an OpenSpec change.
 - Body already contains `Change: <id>`: if `openspec/changes/<id>/` exists, continue it instead of creating a new change (skip step 3 creation, still review). If it exists only under `openspec/changes/archive/`, the issue is effectively solved — report that and stop; closure comes from the archiving commit's `Fixes #<N>`, don't re-spec.
-- Label `draft`: the body is a human-written stub — vague by design. Batch clarifying questions to the user first (step-2 style), then rewrite the whole issue to house style via the `github-issue` skill — title, body (skeleton filled, claims verified), and labels (apply the authoritative priority tier) — and remove the `draft` label before continuing. Human-written body/comments on a `draft` issue may be rewritten without asking (per the `github-issue` skill).
+- Label `draft`: the body is a human-written stub — vague by design. Batch clarifying questions to the user first (step-2 style), then rewrite the whole issue to house style via the `github-issue` skill — title, body (skeleton filled, claims verified), and labels (apply the project's priority tier) — and remove the `draft` label before continuing. Human-written body/comments on a `draft` issue may be rewritten without asking (per the `github-issue` skill).
 - One issue = one shippable unit (AGENTS.md). If the issue spans several independent subsystems, say so before speccing and propose a split.
-- Verify the issue's refs and load-bearing claims against the current codebase: refs must resolve; claims must be verified empirically where cheap (run the function or query, grep for an alleged absence). Fix stale refs/claims in the body (PATCH rule in the `github-issue` skill) and stamp the body with a one-line verification note (date + model; the stamp doubles as the issue's signature). A false load-bearing claim → stop and report before speccing; never spec from an unverified claim.
+- Verify the issue's refs and load-bearing claims against the current codebase: refs must resolve; claims must be verified empirically where cheap (run the function or query, grep for an alleged absence). Fix stale refs/claims in the body (PATCH rule in the `github-issue` skill) and stamp the body with the verification line `verified YYYY-MM-DD (model: <model_id>)` (per the `github-issue` skill; the stamp is the issue's signature). A false load-bearing claim → stop and report before speccing; never spec from an unverified claim.
 
 ## 2. Resolve open questions first
 
@@ -96,8 +96,8 @@ For remaining findings that require a real decision (scope, behavior, tradeoffs,
 
 No issue number needed, and the run does not stop before implementation. Questions still pause the run when a human decision is genuinely required.
 
-**Selection** — fetch `GET /issues?state=open&per_page=50` and pick the best eligible issue:
-- Exclude: PR entries, `product` issues, `needs-ruling` issues, `draft` issues (stubs need an interactive rewrite), issues with unresolved ⚖ items or explicit open questions in body/comments, issues spanning several independent subsystems, issues too vague to spec without guessing.
+**Selection** — fetch `GET /issues?state=open&per_page=100` and pick the best eligible issue:
+- Exclude: PR entries, product-direction issues (`product`/`idea`), `needs-ruling` issues, `draft` issues (stubs need an interactive rewrite), issues with unresolved ⚖ items or explicit open questions in body/comments, issues spanning several independent subsystems, issues too vague to spec without guessing.
 - Prefer explicit acceptance criteria ("Done when"), then priority labels per the project conventions (e.g. `P1` > `P2` > `P3` > unlabeled), then lowest issue number.
 - Skip issues that already carry a `Change: <id>` link: an active `openspec/changes/<id>/` may be mid-flight in another session, and an archived one is effectively solved. Both stay available via the explicit `/issue-to-spec <N>` path.
 - Announce the pick and a one-line reason, then rename the session (see **Session title on completion**) with `#<N> <issue title trimmed to ~60 chars>`; the ` ✓` comes later, when the change is finished. If nothing is eligible, stop and report why.
