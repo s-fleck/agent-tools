@@ -19,8 +19,14 @@ Your task prompt names the change. Read every artifact in `openspec/changes/<id>
 | Clarity | Requirements ambiguous enough to cause someone to build the wrong thing |
 | Scope | Focused enough for a single plan — not covering multiple independent subsystems |
 | YAGNI | Unrequested features, over-engineering |
+| Settled-spec interaction | When the change moves rules into a skill/command or restructures workflow text, whether the receiving structure would violate a clause of a settled main spec in `openspec/specs/` |
+| Binding vocabulary | When the change introduces or renames a domain term: does the term fit the sense the project's binding vocabulary table gives that word? A term can be free in the code and still contradict the binding table (e.g. a word the table defines as "leaf of the category tree", used for a top-level node) — check the *new* word, not only the retired one's footprint |
 
 Finally, answer the question "Is the spec proportional and effective to reach the desired goal"
+
+## Evidence
+
+Every number, count, `file:line`, or expected value you put in the report is a claim about the repo. Check it against the code before reporting it: a wrong count misleads the implementer more than a missing one. If you cannot verify a number, say it is unverified.
 
 ## Calibration
 

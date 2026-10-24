@@ -3,7 +3,7 @@ name: github-issue
 description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style. Also carries the self-contained GitHub REST helper (`github-rest.py`, a skill script — not the `gh` CLI) used by the issue-to-spec command.
 metadata:
   author: Stefan Fleck
-  version: "4.0.0"
+  version: "4.1.0"
 ---
 
 Compose issues for the project's issue registry. AGENTS.md rules apply (registry policy wins); this skill is the how-to.
@@ -14,9 +14,9 @@ Compose issues for the project's issue registry. AGENTS.md rules apply (registry
 2. Use the project's section skeleton (default: `**Problem**` / `**Fix**` / `**Rulings**` / `**Done when**` / `**Out of scope**`).
 3. Delete sections that stay empty before filing. Aim for under ~40 lines; if the evidence itself will not fit, split the issue rather than cutting the evidence.
 4. Fill the sections:
-   - **Problem** — what is wrong or missing, and why it matters. `file:line` plus the enclosing symbol for code (lines rot; symbols are greppable — e.g. `path/to/file` line 138, symbol `parse_amount`); doc name + `§` for binding docs. Verify behavioral claims against the current codebase before filing, and close the Problem with the verification stamp `verified YYYY-MM-DD (model: <model_id>)` — use `repro` instead of `verified` when a run backs the claim. The stamp is the issue's signature (see `issue-comment`) and is required on every agent-authored issue, including a feature issue that only inspected the code; there is no end-of-body signature line. Verify old refs still resolve before trusting them. State the measured numbers, not the expected direction: a mechanism can move a figure up or down, so a claim like "the figures dip" needs its sign checked against the real data.
+   - **Problem** — what is wrong or missing, and why it matters. `file:line` plus the enclosing symbol for code (lines rot; symbols are greppable — e.g. `path/to/file` line 138, symbol `parse_amount`); doc name + `§` for binding docs. Verify behavioral claims against the current codebase before filing, and close the Problem with the verification stamp `verified YYYY-MM-DD (model: <model_id>)` — use `repro` instead of `verified` when a run backs the claim. The stamp is the issue's signature (see `issue-comment`) and is required on every agent-authored issue, including a feature issue that only inspected the code; there is no end-of-body signature line. Verify old refs still resolve before trusting them. State the measured numbers, not the expected direction: a mechanism can move a figure up or down, so a claim like "the figures dip" needs its sign checked against the real data. A term's footprint is a whole-surface measurement, not a file list: sweep the source tree, tests and binding docs with a grep and quote the measured hits — a term that lives in a fixture, a schema or a helper script is part of the footprint.
    - **Fix** — concrete task list (`- [ ]`); name the required spec delta inline (project notation, e.g. `Δspec: <capability>`).
-   - **Rulings** — ⚖ only decisions that need the owner: options + one recommendation. Resolved by editing this section; `needs-ruling` label while undecided.
+   - **Rulings** — ⚖ only decisions that need the owner: options + one recommendation. Resolved by editing this section; `needs-ruling` label while undecided. A naming or vocabulary ruling states its constraint as *every settled sense the new word must not collide with* — the code-level senses **and** the project's binding vocabulary: a word that is free in the code can still contradict the binding table, and the owner must decide against the full set.
    - **Done when** — machine-checkable acceptance: tests that must exist/pass, commands to run, doc bumps. A bug names the regression test that fails before the fix.
    - **Out of scope** — only when a reader (human or agent) might plausibly wander there.
 5. Title: `<scope>: <what>` — a scope, a colon, one space, then the what.

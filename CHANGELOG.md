@@ -18,6 +18,8 @@ name as the area prefix.
 
 ### Changed
 
+- **github-issue:** Add the whole-surface footprint check for a term and require naming/vocabulary rulings to check the project's binding vocabulary (4.1.0)
+- **spec-reviewer:** Add settled-spec interaction and binding-vocabulary criteria, and require evidence checks for reported claims (unversioned subagent)
 - **agent-tools:** README: add `semver` as a required companion to both changelog skills, with the vendoring note; genericize the variant example (`acme`)
 - **agent-tools:** README: warn that a global skill copy can shadow the vendored one (opencode registers skills by name, and the loader resolves duplicates concurrently)
 - **changelog-style-guide:** Add a release-cutting step that delegates the version decision to the `semver` skill (1.1.0)
