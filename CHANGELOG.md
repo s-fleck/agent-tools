@@ -22,6 +22,7 @@ name as the area prefix.
 - **agent-tools:** README: warn that a global skill copy can shadow the vendored one (opencode registers skills by name, and the loader resolves duplicates concurrently)
 - **changelog-style-guide:** Add a release-cutting step that delegates the version decision to the `semver` skill (1.1.0)
 - **doc-rewrite:** Drop the R-specific doc-check example; defer to the project's documented command (1.0.1)
+- **github-issue:** Require every title to be `<scope>: <what>` — a lowercase project scope, a colon, one space, then a lowercase imperative; `area:` is no longer a prefix, and an em dash, ` - ` or a second colon is never the separator (2.0.0)
 - **github-issue:** Replace the R file-path and fire-specific token examples with neutral placeholders (1.0.1)
 - **issue-to-spec:** Sync the generic guardrails from the fire variant — `openspec validate` before hand-off, changelog delegation per project type (`r-news-styleguide` for R, `changelog-style-guide` otherwise), version bumps delegate to the `semver` skill, `draft`-issue rewrite and auto-mode exclusion, load-bearing claim verification, failing-test-first for bugs; GitHub access defers to the `github-issue` skill; the doc-check example is language-neutral
 - **r-data-table:** Rename `data-table` to `r-data-table` so R-specific skills carry the `r-` prefix (2.0.0)

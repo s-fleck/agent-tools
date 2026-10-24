@@ -3,7 +3,7 @@ name: github-issue
 description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style. Also carries the self-contained GitHub REST helper used by the issue-to-spec command.
 metadata:
   author: Stefan Fleck
-  version: "1.0.1"
+  version: "2.0.0"
 ---
 
 Compose issues for the project's issue registry. AGENTS.md rules apply (registry policy wins); this skill is the how-to.
@@ -18,7 +18,11 @@ Compose issues for the project's issue registry. AGENTS.md rules apply (registry
    - **Rulings** — ⚖ only decisions that need the owner: options + one recommendation. Resolved by editing this section; `needs-ruling` label while undecided.
    - **Done when** — machine-checkable acceptance: tests that must exist/pass, commands to run, doc bumps.
    - **Out of scope** — only when a reader (human or agent) might plausibly wander there.
-4. Title: imperative, front-load the what; an `area:` prefix is fine when it helps scanning.
+4. Title: `<scope>: <what>` — a scope, a colon, one space, then the what.
+   - `<scope>` names where the work lands: the project's own module, layer, surface, document or skill. One lowercase word, hyphenated if compound (`cash-ledger`); no underscore, no code formatting. Reuse a scope the open issues already use; a new one takes the project's own word for that area (the code layout or the binding vocabulary), not an invented synonym. Cross-cutting work gets its own short scope (`chore`, `hygiene`, `tooling`); the generic word `area` is never the scope.
+   - The what starts lower case unless its first word is a proper noun or acronym, is imperative, front-loads the verb, and ends without a period.
+   - The scope is separated by exactly `: `. An em dash, ` - ` or a second colon never replaces it, and the scope is never wrapped in backticks: `area:run — add the preflight check` is wrong; `run: add the preflight check` is right. A detail that would otherwise add a second colon goes in parentheses: `run: implement landing (push, PR, required checks, merge)`.
+   - Omit the scope only when the issue genuinely has no single home; say why in the body.
 5. Labels (this is the authoritative set — don't invent others): `P1` highest priority · `P2` medium · `P3` low — pure priority tiers, not failure modes (that context lives in the title/body); `needs-ruling` decision pending; `product` routed to ROADMAP, not a code change; `draft` human-written stub — when work starts, clarify with the user, rewrite title/body/labels to house style, remove the label (human-written text on it may be rewritten without asking).
 6. No token values; no personal data beyond what the fix needs.
 
