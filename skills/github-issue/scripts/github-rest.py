@@ -327,17 +327,26 @@ def _decode_json(body: bytes) -> object | None:
 
 
 def _print_result(method: str, body: bytes) -> None:
-    """Print the useful part of a response: the JSON body, a URL or `done`."""
+    """Print the JSON response body; `done` when a write returns no body.
+
+    Writes print the created or updated resource, so the caller can confirm
+    the result without a follow-up GET. A write has already landed by the time
+    its response is printed, so an empty or unparseable body prints `done`
+    instead of failing the call. A GET keeps the strict JSON contract.
+    """
     if method == 'DELETE':
         print('done')
         return
-    data = _decode_json(body)
-    if method == 'GET':
-        if data is not None:
-            print(json.dumps(data, indent=2))
-        return
-    url = data.get('html_url') if isinstance(data, dict) else None
-    print(url if isinstance(url, str) else 'ok')
+    try:
+        data = _decode_json(body)
+    except HelperError:
+        if method == 'GET':
+            raise
+        data = None
+    if data is not None:
+        print(json.dumps(data, indent=2))
+    elif method != 'GET':
+        print('done')
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -359,10 +368,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             payload = _load_payload(args.payload)
             body = _request(slug, token, args.method, args.path, payload).body
+        _print_result(args.method, body)
     except HelperError as err:
         print(err, file=sys.stderr)
         return 1
-    _print_result(args.method, body)
     return 0
 
 

@@ -17,6 +17,7 @@ name as the area prefix.
 
 ### Changed
 
+- **github-issue:** Print the response JSON for successful writes instead of the resource URL or `ok`, so callers can confirm the created or updated resource without a follow-up GET. An empty write response prints `done` (9.0.0)
 - **issue-to-spec:** Capture postmortem seeds during a run; finalization stays at the archive boundary, never in this command
 
 ### Fixed

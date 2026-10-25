@@ -3,7 +3,7 @@ name: github-issue
 description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style — and when maintaining an issue's body or labels, posting or editing the post-solve implementation comment, or applying the signature and traceability policy to agent-authored GitHub content. Carries the self-contained GitHub REST helper (`scripts/github-rest.py`, a skill script — not the `gh` CLI); label resolution and read-only triage signals live in `references/labels.md`.
 metadata:
   author: Stefan Fleck
-  version: "8.0.0"
+  version: "9.0.0"
 ---
 
 # GitHub Issue
@@ -55,6 +55,7 @@ python3 .opencode/skills/github-issue/scripts/github-rest.py DELETE /issues/42/l
 ```
 
 - `--paginate` follows `Link rel=next` for a `GET` list endpoint and prints one JSON array; it refuses a next link outside the API host. Without it, one page is returned.
+- Every successful call prints its JSON response; writes print the created or updated resource, so confirm `number`, `html_url`, `state` or the label list from that output instead of issuing a confirmation GET. A write with an empty response prints `done`.
 - A file argument ending in `.json` is sent as the raw payload (e.g. creating an issue); any other file is wrapped as `{"body": <text>}` (comments, body updates).
 - Transient failures retry automatically; a POST is not retried after a 5xx or a network error because the write may have landed, so check before retrying.
 - Token hygiene: the operator token file is `$XDG_CONFIG_HOME/issue-pipeline/github-token` (one line, file 600, directory 700); a project may also provide `<REPO>_GH_TOKEN` in its environment — never write the token value into the repo, workspace files, or logs.
