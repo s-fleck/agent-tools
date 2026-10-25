@@ -33,7 +33,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/issue-comment` | post-solve issue comments | ditto |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
 | `skills/skill-update` | OpenCode skill/command style guide, layout and discovery; amending, versioning, renaming, syncing back skills; pulling upstream into a variant; parallel-safe canonical landings; the metadata contract for variants | the project amends its own copies or ships slash commands |
-| `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change; `/issue-to-spec auto` picks and implements one | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
+| `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change; `/issue-to-spec auto [<issue>]` picks or takes an issue and implements it | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
 | `agents/spec-reviewer` | read-only OpenSpec change reviewer | ditto |
 
 ## Skill versioning

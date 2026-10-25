@@ -13,11 +13,14 @@ name as the area prefix.
 
 ### Added
 
+- **issue-to-spec:** Auto mode accepts an explicit issue (`/issue-to-spec auto 42`) and still implements after review
 - **issue-to-spec:** Rename the session with the OpenCode API (`opencode api session.update`) instead of a plugin tool; the title marks work in progress and gains a trailing ` ✓` on completion
 - **semver:** Add skill mapping release contents to MAJOR/MINOR/PATCH per Semantic Versioning (1.0.0)
 
 ### Changed
 
+- **issue-to-spec:** Parse the leading `auto` as an exact token instead of a substring, reject malformed, PR-URL, and foreign-repo targets before fetching, stop when a numeric target resolves to a PR, and ask before proceeding on closed issues
+- **issue-to-spec:** Treat auto-selection eligibility as selection-only: explicit `auto <N>` targets still hit the per-issue guardrails (draft/`needs-ruling` ask, active changes ask before implementation, product/archived/multi-subsystem stop)
 - **github-issue:** Add the whole-surface footprint check for a term and require naming/vocabulary rulings to check the project's binding vocabulary (4.1.0)
 - **spec-reviewer:** Add settled-spec interaction and binding-vocabulary criteria, and require evidence checks for reported claims (unversioned subagent)
 - **agent-tools:** README: add `semver` as a required companion to both changelog skills, with the vendoring note; genericize the variant example (`acme`)

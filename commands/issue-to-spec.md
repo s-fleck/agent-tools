@@ -1,17 +1,41 @@
 ---
-description: Triage a GitHub issue into a reviewed OpenSpec change; `auto` also implements it
+description: Triage a GitHub issue into a reviewed OpenSpec change; auto mode also implements it, with or without an issue number
 agent: build
 ---
 
-Drive GitHub issue `$ARGUMENTS` from triage to a reviewed OpenSpec change ready for `/opsx-apply`. Flow: fetch issue → rename session → resolve open rulings → create change → independent spec review → auto-fix → escalate real decisions. You do NOT implement or commit — unless Auto mode is requested. The session title gets a trailing ` ✓` once the change is finished (see **Session title on completion**).
+## Arguments
 
-**Auto mode:** `/issue-to-spec auto` selects the best issue that needs no human input, runs the same flow unattended, then implements it via the `openspec-apply-change` skill. Details at the bottom of this file.
+Usage: `/issue-to-spec [auto] [<issue>]`
 
-**Input:** the issue number (e.g. `42`), an issue URL, or `auto` (see Auto mode). If `$ARGUMENTS` is empty, fetch the open issues (`--paginate GET "/issues?state=open&per_page=100"`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark product-direction issues (`product`, or the project's equivalent such as `idea`) in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
+OpenCode supplies the invocation: first position = $1; remaining positions = $2.
+
+| First position | Remaining | Mode | Target |
+|---|---|---|---|
+| empty | empty | manual | interactive picker |
+| `<issue>` | empty | manual | first position |
+| `auto` | empty | auto | auto-select |
+| `auto` | `<issue>` | auto | remaining |
+| anything else | anything | — | usage error, stop |
+
+`<issue>` is the issue number (`42`), a `#`-prefixed number (`#42`), or a URL to an issue in this repository.
+
+Rules:
+- `auto` is matched as a whole token, case-insensitively, and only in the first position. Never use substring matching: an issue URL that contains `auto` is still a URL.
+- At most one target. Anything not in the table — `42 auto`, `auto 42 extra`, `auto auto`, an unknown word, a PR URL, or a URL from another repository — prints the usage block and stops before any GitHub fetch. Do not guess a target. For `42 auto`, suggest `/issue-to-spec auto 42`.
+- Normalize `42` and `#42` to `<N>`. For a URL, require the same repository as the project and extract the issue number only after that check; reject `/pull/` URLs. A numeric target that resolves to a PR also stops.
+- With an explicit target, skip issue selection entirely (both the picker and Auto mode's Selection; do not fetch the open-issue list). An explicit target still goes through the step-1/step-2 guardrails.
+
+**Interactive picker (manual mode, no target):** fetch the open issues (`--paginate GET "/issues?state=open&per_page=100"`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark product-direction issues (`product`, or the project's equivalent such as `idea`) in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
+
+`auto` is the **execution mode** ("spec, review, then implement"). The target is separate: supply one and auto skips selection; omit it and auto selects. Bare `auto` never opens the picker.
+
+Drive the resolved issue from triage to a reviewed OpenSpec change ready for `/opsx-apply`. Flow: fetch issue → rename session → resolve open rulings → create change → independent spec review → auto-fix → escalate real decisions. You do NOT implement or commit — unless Auto mode is requested. The session title gets a trailing ` ✓` once the change is finished (see **Session title on completion**).
+
+Auto mode runs the same flow, then implements via the `openspec-apply-change` skill; details at the bottom.
 
 ## GitHub access
 
-Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included). If `$ARGUMENTS` is a URL, extract the issue number from it.
+Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included). If the target is a URL, its repository must match the project's; extract the issue number only after that check.
 
 ## Project conventions
 
@@ -19,7 +43,7 @@ Everything project-specific comes from the project's AGENTS.md and skills: issue
 
 ## Session title on completion
 
-The title set in step 1 (or auto-mode selection) marks the work as *in progress*. When the change is **finished**, rename the session again with the *same* title plus a trailing ` ✓` (e.g. `#42 scanner: widen host matching ✓`).
+The title set in step 1 (or by Auto mode's target resolution) marks the work as *in progress*. When the change is **finished**, rename the session again with the *same* title plus a trailing ` ✓` (e.g. `#42 scanner: widen host matching ✓`).
 
 Rename with the OpenCode API — `opencode api` reuses the TUI's service discovery and auth, and `$OPENCODE_SESSION_ID` identifies the current session:
 
@@ -43,6 +67,8 @@ Then rename the session so it reflects the work for the rest of the run: run the
 
 Guardrails:
 - Label `product` (or the project's product-direction label, e.g. `idea`) → stop and tell the user it routes to the project roadmap, not an OpenSpec change.
+- The fetched object has a `pull_request` field → stop; this command works on issues only.
+- The issue is `closed` and has no active or archived change → report the state and ask before proceeding (the picker and Auto mode's Selection only offer open issues).
 - Body already contains `Change: <id>`: if `openspec/changes/<id>/` exists, continue it instead of creating a new change (skip step 3 creation, still review). If it exists only under `openspec/changes/archive/`, the issue is effectively solved — report that and stop; closure comes from the archiving commit's `Fixes #<N>`, don't re-spec.
 - Label `draft`: the body is a human-written stub — vague by design. Batch clarifying questions to the user first (step-2 style), then rewrite the whole issue to house style via the `github-issue` skill — title, body (skeleton filled, claims verified), and labels (apply the project's priority tier) — and remove the `draft` label before continuing. Human-written body/comments on a `draft` issue may be rewritten without asking (per the `github-issue` skill).
 - One issue = one shippable unit (AGENTS.md). If the issue spans several independent subsystems, say so before speccing and propose a split.
@@ -92,23 +118,35 @@ For remaining findings that require a real decision (scope, behavior, tradeoffs,
 5. Summarize: change name/location, review status, fixes applied, rulings recorded, doc-sync result, doc-checker result, leftover advisory items.
 6. Manual mode: close with "Ready for `/opsx-apply`." Auto mode: continue to Auto mode below. Manual mode does **not** mark the session done — the change is only specced at hand-off (see **Session title on completion**).
 
-## Auto mode (`$ARGUMENTS` contains `auto`)
+## Auto mode (spec + implement)
 
-No issue number needed, and the run does not stop before implementation. Questions still pause the run when a human decision is genuinely required.
+Auto mode runs the same steps 1–7, then implements. The target is optional:
+- **No target** — run **Selection** below to pick the issue.
+- **Explicit target** — skip Selection and start at step 1 with `<N>`; after fetching the issue, announce `Auto mode → #<N> <title> (explicit target)`.
 
-**Selection** — fetch `--paginate GET "/issues?state=open&per_page=100"` and pick the best eligible issue:
+Questions still pause the run when a human decision is genuinely required.
+
+### Selection (only when no target)
+
+Fetch `--paginate GET "/issues?state=open&per_page=100"` and pick the best eligible issue:
 - Exclude: PR entries, product-direction issues (`product`/`idea`), `needs-ruling` issues, `draft` issues (stubs need an interactive rewrite), issues with unresolved ⚖ items or explicit open questions in body/comments, issues spanning several independent subsystems, issues too vague to spec without guessing.
 - Prefer explicit acceptance criteria ("Done when"), then priority labels per the project conventions (e.g. `P1` > `P2` > `P3` > unlabeled), then lowest issue number.
-- Skip issues that already carry a `Change: <id>` link: an active `openspec/changes/<id>/` may be mid-flight in another session, and an archived one is effectively solved. Both stay available via the explicit `/issue-to-spec <N>` path.
-- Announce the pick and a one-line reason, then rename the session (see **Session title on completion**) with `#<N> <issue title trimmed to ~60 chars>`; the ` ✓` comes later, when the change is finished. If nothing is eligible, stop and report why.
+- Skip issues that already carry a `Change: <id>` link: an active `openspec/changes/<id>/` may be mid-flight in another session, and an archived one is effectively solved. Both can be addressed explicitly with `/issue-to-spec auto <N>`: active changes are reviewed and ask before implementation; archived ones stop with the report.
+- Announce the pick and a one-line reason, then rename the session (see **Session title on completion**) with `#<N> <issue title trimmed to ~60 chars>`; the ` ✓` comes later, when the change is finished. If nothing is eligible, stop and report why; never fall back to the interactive picker.
 
-**Execution deltas** for steps 1–7:
-- Step 1's claim verification is blocking here — no human has read the issue this session; a false load-bearing claim stops the run.
-- Step 2 normally finds nothing for an eligible issue — if something slipped through, ask instead of guessing.
+These filters choose an issue for an unattended run. They do **not** validate an explicit target: `auto <N>` skips Selection and relies on the step-1/step-2 guardrails instead. A product issue still stops; a draft or `needs-ruling` issue asks; a multi-subsystem or vague issue stops; an active change is reviewed and then asks before implementation; an archived change stops.
+
+### Execution deltas for steps 1–7
+
+- Step 1's claim verification is blocking in Auto mode — the run implements without a hand-off review, so a false load-bearing claim stops it.
+- Step 2 may find rulings on an explicit target — batch-ask instead of guessing.
+- Step 1's `Change: <id>` guardrail: for an active change, review it as usual, then **ask** whether to implement it here before continuing (it may be mid-flight in another session). For an archived change, stop as usual.
+- A `draft` or `needs-ruling` target is allowed under explicit `auto <N>`: the user is present, so run the interactive rewrite and ruling steps. Bare auto still excludes both during Selection.
 - Steps 6 and 7-docs: batch-ask any human decisions, including needed binding-doc edits (AGENTS.md: doc edits are always explicit).
 - Step 7 summary happens, then continue below instead of handing off.
 
-**Implement:**
+### Implement
+
 1. Load the `openspec-apply-change` skill and follow it for the change.
 2. Update the changelog per the project's changelog skill if one exists — R packages: `r-news-styleguide`; other projects: `changelog-style-guide`; omit if the project has none. The skill decides what gets an entry; never skip an entry the skill requires. Choose the version bump with the `semver` skill — a release takes the highest bump its entries require (breaking → major; `Added`/`Deprecated`/backwards-compatible `Changed` → minor; `Fixed`/internal-only/docs-only → patch). In R packages, rule 14 bumps on completion; elsewhere the bump is applied when `[Unreleased]` is cut. Run the skill's validation; release promotion happens at the post-archive boundary, not here.
 3. Run the checks required by the skill and the project's AGENTS.md (tests/lint), plus any check the change's tasks require.
@@ -118,7 +156,7 @@ No issue number needed, and the run does not stop before implementation. Questio
 7. Stop: no archive, no commit. Suggest `/opsx-archive` (and a closing commit with `Fixes #<N>`) once the user has verified.
 8. Task unclear, blocker, or failing check you can't fix → pause and report, same as manual mode; do not mark the session done.
 
-**Hard rules**
+### Hard rules
 - Manual mode: no implementation code. Auto mode: implement only via the `openspec-apply-change` skill, only after the reviewed spec exists. Never commit in either mode.
 - Never echo the GitHub token.
 - One batched question call per escalation round; ask only what genuinely needs a human.
