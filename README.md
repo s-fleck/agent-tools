@@ -30,6 +30,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/changelog-style-guide` | Keep a Changelog for non-R projects | a non-R project |
 | `skills/semver` | SemVer version bumps for releases — **companion**, vendor with either changelog skill | any project that releases |
 | `skills/github-issue` | issue composition and post-solve comments, label resolution and read-only triage signals (`references/labels.md`), plus the self-contained GitHub REST helper (`scripts/github-rest.py`, vendored with the skill directory) | the project files or comments on GitHub issues |
+| `skills/postmortem` | landmark postmortems: trigger detection, durable seeds while context exists, consolidation at archive, and evidence-based registry entries (`references/style-guide.md`) | the project keeps a `POSTMORTEMS.md` registry |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
 | `skills/skill-update` | OpenCode skill/command style guide, layout and discovery; amending, versioning, renaming, syncing back skills; pulling upstream into a variant; parallel-safe canonical landings; the metadata contract for variants | the project amends its own copies or ships slash commands |
 | `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change with label/ownership triage; `/issue-to-spec auto [<issue>]` picks or takes an issue and implements it | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
@@ -85,6 +86,7 @@ Commands are single `.md` files: copy the file, not a directory. A command has n
 P=/path/to/project
 mkdir -p "$P/.opencode/skills" "$P/.opencode/agent" "$P/.opencode/commands" "$P/tools"
 cp -r skills/github-issue "$P/.opencode/skills/"
+cp -r skills/postmortem "$P/.opencode/skills/"           # when the project keeps POSTMORTEMS.md
 cp -r skills/r-news-styleguide "$P/.opencode/skills/"   # pick per project, e.g. R packages
 cp -r skills/semver "$P/.opencode/skills/"                # with either changelog skill
 cp -r skills/skill-update "$P/.opencode/skills/"          # whenever the project amends its copies
