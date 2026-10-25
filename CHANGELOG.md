@@ -15,6 +15,10 @@ name as the area prefix.
 
 - **postmortem:** Add a landmark-triggered postmortem lifecycle: detect triggers, seed the change while context exists, consolidate at archive before the archiving commit, and keep evidence-based registry entries (1.0.0)
 
+### Changed
+
+- **issue-to-spec:** Capture postmortem seeds during a run; finalization stays at the archive boundary, never in this command
+
 ### Fixed
 
 - **skill-update:** Accept a new canonical skill at `1.0.0` in the bump gate instead of failing because it is absent at the base (5.0.1)

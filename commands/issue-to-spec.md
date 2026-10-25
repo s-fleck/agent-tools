@@ -39,7 +39,7 @@ Load the `github-issue` skill — it carries the REST helper (`scripts/github-re
 
 ## Project conventions
 
-Everything project-specific comes from the project's AGENTS.md and skills: issue skeleton, ruling (⚖) handling, binding docs, checks to run, changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`), versioning (`semver`). Milestone and project-board status are project-specific too: when AGENTS.md makes either a gate, read it through the project's documented path and treat `In progress`/`Done` like an assignee or terminal signal. Companions expected in `.opencode/`: the `github-issue` skill and the `spec-reviewer` subagent.
+Everything project-specific comes from the project's AGENTS.md and skills: issue skeleton, ruling (⚖) handling, binding docs, checks to run, changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`), versioning (`semver`). Milestone and project-board status are project-specific too: when AGENTS.md makes either a gate, read it through the project's documented path and treat `In progress`/`Done` like an assignee or terminal signal. Companions expected in `.opencode/`: the `github-issue` skill and the `spec-reviewer` subagent. If the project keeps a postmortem registry, also the `postmortem` skill.
 
 **Label roles.** Resolve the project's labels from the `github-issue` labels reference (`references/labels.md`) before triage. This command uses four write roles: *priority* (default `P1`–`P3`), *needs-ruling* (default `needs-ruling`), *product-direction* (default `product`, sometimes `idea`), and *draft* (default `draft`). It also reads the reference's read-only triage signals: *disposition* (defaults `wontfix`, `invalid`, `duplicate`, `question`), *stale*, project-defined *blocked*/*hold* labels, an optional *ready-gate*, and *classification* hints (`bug`, `enhancement`, `documentation`). The resolved names win over the defaults named below. Never apply, change, or remove a read-only signal; a write deny in AGENTS.md does not hide a human-applied one.
 
@@ -119,6 +119,14 @@ For bug issues (classified in step 1), `tasks.md` must also *start* with reprodu
 
 Docs↔specs sync: if the spec settles anything that affects the project's binding docs (per AGENTS.md), flag it for the user during hand-off (step 7). Doc edits are always explicitly confirmed, never silent.
 
+## Postmortem seeds
+
+A postmortem is a landmark record, not an end-of-session diary. If a landmark trigger fires during this run — a binding-doc, contract, schema, or dependency-baseline change; an escaped defect; repeated friction (the same finding or failure twice); a reversed scope decision; or a novel landing failure — write a seed **immediately** to `openspec/changes/<id>/postmortem.md`. If the change does not exist yet, create the seed as soon as step 3 creates it and record the earlier event with its evidence links.
+
+Keep the seed short and append-only: timestamp, trigger, stage, one-line observation, evidence. Write it into the change directory so the apply/archive flow commits it with the change; never leave it only in conversation or an untracked scratch file. Do not wait for the end of the session: later stages and later sessions start fresh and cannot recover the conversation.
+
+This command **never writes the postmortem registry**. The archive boundary consolidates seeds before the archiving commit, per the `postmortem` skill. If the project has no `postmortem` skill, apply the same trigger and seed rules inline and hand the seed to the archive step.
+
 ## 4. Independent spec review
 
 Delegate to the `spec-reviewer` subagent via the Task tool — fresh context, read-only, cannot edit. Prompt: "Review OpenSpec change `<id>` in `openspec/changes/<id>/`. Follow your agent instructions. Return only the review report." If the subagent isn't installed, use a general read-only subagent and give it the criteria inline: completeness, consistency, clarity, scope, YAGNI; report issues + advisory recommendations only. Wait for the report.
@@ -137,7 +145,7 @@ For remaining findings that require a real decision (scope, behavior, tradeoffs,
 2. Docs sync per AGENTS.md: review the settled spec against the project's binding docs; propose any doc update and get explicit confirmation before editing. If a doc changes, bump its `Status:` version + date and verify cross-references.
 3. Run the project's doc checker if one exists (see AGENTS.md/README for the command): fix in-scope findings, surface the rest.
 4. Run `openspec validate --changes` and `openspec status --change <id>`; fix any validation failure before hand-off. Spec-hygiene detail — the validator checks only the **first source line** of a requirement body for `SHALL`/`MUST` — lives in the spec-hygiene guardrail of the openspec skills.
-5. Summarize: change name/location, review status, fixes applied, rulings recorded, doc-sync result, doc-checker result, leftover advisory items.
+5. Summarize: change name/location, review status, fixes applied, rulings recorded, doc-sync result, doc-checker result, postmortem seeds (if any), leftover advisory items.
 6. Manual mode: close with "Ready for `/opsx-apply`." Auto mode: continue to Auto mode below. Manual mode does **not** mark the session done — the change is only specced at hand-off (see **Session title on completion**).
 
 ## Auto mode (spec + implement)
@@ -185,6 +193,7 @@ These filters choose an issue for an unattended run. They do **not** validate an
 - Manual mode: no implementation code. Auto mode: implement only via the `openspec-apply-change` skill, only after the reviewed spec exists. Never commit in either mode.
 - Never write a read-only triage label (`wontfix`, `invalid`, `duplicate`, `question`, `stale`, project blockers/ready gates, classification hints) unless the user explicitly asks for that specific change; never spec a `duplicate` or a `question`.
 - Never PATCH from a cached issue body; re-fetch immediately before every body edit.
+- Never write the postmortem registry from this command; capture seeds only. The archive boundary consolidates them before the archiving commit.
 - Never echo the GitHub token.
 - One batched question call per escalation round; ask only what genuinely needs a human.
 - Follow the project's AGENTS.md (docs map, issue mechanics, package conventions) at all times.
