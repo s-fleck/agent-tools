@@ -15,6 +15,9 @@ concurrency:
 
 jobs:
   validate:
+    # This job name is the required status-check context in `master` branch
+    # protection. Renaming it requires updating the protection rule in the same
+    # change.
     name: Validate Skills
     runs-on: ubuntu-latest
     steps:

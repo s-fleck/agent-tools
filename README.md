@@ -59,7 +59,7 @@ Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metada
 - **An overlay is vendored next to its base skill.** `r-package-style-guide-rlang` overrides one section of `r-package-style-guide`; copying both leaves the base's metadata untouched. A project that amends the overlay itself records it as a variant of the overlay skill, not of the base.
 - **Project-specific rules live in the project copy**; the canonical copy stays generic. Genericize the lesson when syncing back — keep the rule, drop the project's names, paths, and tokens.
 - **Rename the folder and the frontmatter `name` together** when a project copy is renamed; the canonical name stays in `upstream`. A rename in this repo is a MAJOR bump.
-- **Canonical changes land through a fetch/rebase loop.** See `skill-update` for the parallel-safe landing procedure (per-session worktree, rebase, re-validate, push with retry, wait for CI). Versions are allocated when the change reaches `origin/master`, not at edit time.
+- **Canonical changes land through pull requests.** See `skill-update` for the parallel-safe landing procedure (per-session worktree, rebase, re-validate, push the branch, open a pull request, squash-merge after the required check, then wait for the post-merge run). `master` is protected; the shared checkout is a fetch anchor and is fast-forwarded after each merge. Versions are allocated when the change reaches `origin/master`, not at edit time.
 
 ## Conventions
 
@@ -68,13 +68,13 @@ Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metada
 
 ## Checks
 
-`Skill Validation` runs on every push and pull request. The same gate is available locally:
+`Skill Validation` runs on every pull request and on every push to `master`. The same gate is available locally:
 
 ```bash
 scripts/check.sh origin/master
 ```
 
-It validates the canonical layout and metadata, then requires a strict version bump and a matching `[Unreleased]` entry for every changed skill. A push is not landed until the run for its SHA is green; see `AGENTS.md` for the failure loop.
+It validates the canonical layout and metadata, then requires a strict version bump and a matching `[Unreleased]` entry for every changed skill. Changes land through a pull request whose `Validate Skills` check is green; the merge commit must also pass the post-merge run. See `AGENTS.md` for the failure loop.
 
 ## Vendoring
 
