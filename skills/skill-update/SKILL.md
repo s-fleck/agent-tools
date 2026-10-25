@@ -9,7 +9,7 @@ description: >
   template and frontmatter. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "4.2.0"
+  version: "5.0.0"
 ---
 
 # Skill Update
@@ -51,6 +51,8 @@ Initial vendoring is a straight copy: the whole directory for a skill, the singl
 - Bumping a skill's version and recording it in the changelog.
 - Landing a canonical change while other writers are active (parallel updates).
 - A push was rejected and you need to rebase and re-validate.
+- A `Skill Validation` run for a landed change is red and you need to fix
+  forward.
 
 ## The Two Copies
 
@@ -101,7 +103,10 @@ If more than one source contains the ID, stop and resolve the duplicate before e
 
 ## Parallel Updates — Landing Procedure
 
-The canonical repo has no CI gate and accepts direct pushes to `master`. Multiple writers may edit skills concurrently. To land a change without conflicts or lost updates:
+The canonical repo runs `Skill Validation` on every push and pull request and
+accepts direct pushes to `master`. A push is not landed until the run for the
+pushed SHA is green. Multiple writers may edit skills concurrently. To land a
+change without conflicts or lost updates:
 
 1. **Fetch and isolate.** `git -C ~/workspace/agent-tools fetch origin`. Create a per-session worktree from `origin/master` — never edit the shared checkout directly:
    ```bash
@@ -116,7 +121,7 @@ The canonical repo has no CI gate and accepts direct pushes to `master`. Multipl
    git -C "$WT" add skills/<name>/SKILL.md CHANGELOG.md README.md
    ```
 
-3. **Commit with the tentative version.** After editing, run the skill validator (`python3 skills/skill-update/scripts/check_skill.py --repo .`) to verify the tentative version bump and changelog entry. Commit:
+3. **Commit with the tentative version.** After editing, run `scripts/check.sh origin/master` to verify the canonical checks, the tentative version bump, and the changelog entry. Commit:
    ```bash
    git -C "$WT" commit -m "<skill>: <imperative summary> (<version>)"
    ```
@@ -131,6 +136,7 @@ The canonical repo has no CI gate and accepts direct pushes to `master`. Multipl
    - If the other writer's change is the same lesson, your residual diff may be zero: drop the commit (`git reset HEAD~1`).
    - If it is a refinement, reclassify and bump from their version.
    - Search `origin/master` for the generic lesson again (see **Syncing Back to Canonical**, step 2). If they already landed it, sync nothing.
+   - Run `scripts/check.sh origin/master` again after the rebase. It must pass before you push.
 
 5. **Changelog reconciliation.** After rebase, re-read the **entire** `[Unreleased]` section. Insert or rewrite your entry in sorted position (area name alphabetically). Never drop or rewrite another writer's distinct entry. If the conflict is ambiguous, stop and ask rather than guessing.
 
@@ -141,12 +147,19 @@ The canonical repo has no CI gate and accepts direct pushes to `master`. Multipl
    - On rejection (non-fast-forward), repeat from step 4 (fetch, rebase, re-check, push).
    - Bound retries at three attempts with a short randomized wait (`sleep $((RANDOM % 5 + 1))`), then stop and leave the branch for a human.
    - Never force-push. Never merge `origin/master` into the branch; rebase keeps history linear.
+   - Record the pushed object name: `SHA=$(git -C "$WT" rev-parse HEAD)`.
 
-7. **Cleanup.** Only after the commit is on `origin/master`, remove the worktree:
+7. **Verify CI.** Wait for the `Skill Validation` run for `$SHA` to finish.
+   - Green: continue to cleanup.
+   - Red: read the failing step's log, fix the cause in a new commit, run `scripts/check.sh origin/master` again, and push again.
+   - Bound the CI-fix loop at three attempts. If it is still red, leave the worktree and report the run URL and failed step.
+   - Do not report the change as landed while the run is pending or red.
+
+8. **Cleanup.** Only after the commit is on `origin/master` **and** the run for `$SHA` is green, remove the worktree:
    ```bash
    git -C ~/workspace/agent-tools worktree remove "$WT"
    ```
-   If the push failed, leave the worktree and report its path.
+   If the push failed or CI is red, leave the worktree and report its path and the run URL.
 
 **Version allocation is at landing, not edit time.** An unpublished version never reached `origin/master` and may be discarded during rebase. A pushed version is never reused.
 
@@ -249,7 +262,7 @@ The current canonical state is always `origin/master` after `git fetch`. Do not 
 
 ## Validation
 
-A `check_skill.py` script ships with this skill (see `skills/skill-update/scripts/check_skill.py`). Run it in the relevant mode before committing.
+A `check_skill.py` script ships with this skill (see `skills/skill-update/scripts/check_skill.py`). In the canonical repo, `scripts/check.sh` wraps the canonical check and the per-skill bump check; run it before committing and again after a rebase.
 
 ### Canonical change
 
@@ -261,7 +274,7 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/script
 6. A new, renamed, or forked skill has a README Contents row and vendoring command. For a rename, `rg '<old-name>'` finds no stale references.
 7. If the repo ships a doc check, run it. If the documented command is missing, fix the reference or skip; a broken doc-check reference is a repo bug, not a skill failure.
 8. The skill ID is unique across the repo, is lowercase kebab-case, and the directory name and frontmatter `name` agree. The skill root holds only `SKILL.md`, `references/`, `scripts/`, and `assets/`.
-9. Run `python3 skills/skill-update/scripts/check_skill.py --repo .` — it validates the skill layout and IDs, frontmatter, versions, changelog coverage, duplicate entries, README cross-references, and duplicate skill/version pairs.
+9. Run `scripts/check.sh origin/master` — it validates the skill layout and IDs, frontmatter, versions, changelog coverage, duplicate entries, README cross-references, and duplicate skill/version pairs, then checks every changed skill for a strict bump against `origin/master`.
 
 ### Project amendment
 
@@ -287,7 +300,11 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/script
 
 Before pushing a canonical change:
 
-- Run `python3 skills/skill-update/scripts/check_skill.py --check-bump <skill> --base origin/master` — it verifies a strict version increase over the base, a matching changelog entry, and a clean tree.
+- Run `scripts/check.sh origin/master` — it runs the canonical check and the bump check for every changed skill. The underlying command is `python3 skills/skill-update/scripts/check_skill.py --check-bump <skill> --base origin/master`; it verifies a strict version increase over the base, a matching changelog entry, and a clean tree.
+
+After pushing:
+
+- Wait for the `Skill Validation` run for the pushed SHA. Report the run URL only when it is green; a pending or red run means the change is not landed.
 
 ## Red Flags — Stop And Reconsider
 
@@ -307,6 +324,10 @@ Before pushing a canonical change:
 - You edited the shared checkout `~/workspace/agent-tools` directly instead of using a per-session worktree.
 - You used `git add -A` or `git commit -a` instead of staging explicit paths.
 - You force-pushed or merged `origin/master` into your branch instead of rebasing.
+- You reported a change as landed before the `Skill Validation` run for the pushed SHA was green.
+- You removed the worktree while the run for the pushed SHA was pending or red.
+- You weakened or skipped a CI check to make a red run green.
+- You force-pushed `master` to recover from a CI failure.
 - You kept a pre-rebase version number or changelog entry after the base moved.
 - You resolved a changelog conflict by dropping another writer's distinct entry.
 - You recorded a local (unpushed) canonical commit in `upstream_commit`.

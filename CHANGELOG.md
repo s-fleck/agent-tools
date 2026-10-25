@@ -19,6 +19,8 @@ name as the area prefix.
 
 ### Changed
 
+- **agent-tools:** Make `Skill Validation` actionable: run on pull requests and pushes, compare changed skills against the event base instead of `origin/master`, cover every file under `skills/`, cancel superseded runs, and add `AGENTS.md` plus `scripts/check.sh` for the pre-push and post-push feedback loop
+- **skill-update:** Make CI verification part of landing: correct the "no CI gate" claim, require the pushed SHA's run to be green before cleanup, and add CI-failure red flags (5.0.0)
 - **github-issue:** Move the REST helper to `scripts/github-rest.py` and update every invocation path; the skill root now follows the canonical layout (`SKILL.md` plus `references/`, `scripts/`, and `assets/`) (8.0.0)
 - **github-issue:** Define label resolution in `references/labels.md`: skill defaults, project AGENTS.md overrides, write/read deny rules, repository label descriptions, and ask-before-use for incomplete metadata; add read-only triage signals for the standard GitHub labels (`wontfix`/`invalid`/`duplicate`/`question`, `stale`, project blockers, ready gates, and classification hints); the style guide keeps the form contract (7.0.0)
 - **issue-to-spec:** Resolve label roles through the `github-issue` labels reference instead of hardcoding `product`/`idea`, `draft`, `needs-ruling`, and the priority tiers

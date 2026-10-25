@@ -1,16 +1,17 @@
 name: Skill Validation
 
 on:
+  pull_request:
   push:
     branches: [master]
-    paths:
-      - 'skills/**'
-      - 'CHANGELOG.md'
-      - 'README.md'
-      - '.github/workflows/skills.yml'
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   validate:
@@ -27,21 +28,27 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Validate canonical repo
-        run: |
-          python skills/skill-update/scripts/check_skill.py --repo . --strict
-
-      - name: Validate each skill's version bump on push
-        run: |
-          # Find which skills changed in this push
-          CHANGED=$(git diff --name-only HEAD~1 HEAD -- skills/*/SKILL.md 2>/dev/null | sed -E 's|skills/([^/]+)/.*|\1|' | sort -u)
-          for skill in $CHANGED; do
-            if [ -n "$skill" ] && [ -d "skills/$skill" ]; then
-              echo "Checking bump for $skill..."
-              python skills/skill-update/scripts/check_skill.py --check-bump "$skill" --base origin/master || exit 1
-            fi
-          done
+      - name: Validate canonical repo and changed skill versions
+        env:
+          EVENT: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
         shell: bash
+        run: |
+          set -euo pipefail
 
-  # Optional: validate project variants if they're in the repo
-  # (not applicable for agent-tools itself, but the workflow exists for downstream projects)
+          if [ "$EVENT" = "pull_request" ]; then
+            BASE="$PR_BASE"
+          elif [ "$EVENT" = "push" ]; then
+            BASE="$PUSH_BEFORE"
+          else
+            BASE="$(git merge-base HEAD origin/master)"
+          fi
+
+          if ! git cat-file -e "${BASE}^{commit}" 2>/dev/null; then
+            echo "No usable base commit (initial push); skipping bump check."
+            python3 skills/skill-update/scripts/check_skill.py --repo . --strict
+            exit 0
+          fi
+
+          scripts/check.sh "$BASE"

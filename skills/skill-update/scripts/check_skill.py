@@ -593,9 +593,13 @@ def validate_bump(skill_name: str, base_rev: str, repo: Path) -> list[str]:
             path = line[3:].strip()
             allowed = (
                 path.startswith(f"skills/{skill_name}/")
-                or path == "CHANGELOG.md"
-                or path == "README.md"
-                or path == ".github/workflows/skills.yml"
+                or path.startswith("scripts/")
+                or path in {
+                    "CHANGELOG.md",
+                    "README.md",
+                    "AGENTS.md",
+                    ".github/workflows/skills.yml",
+                }
             )
             if not allowed:
                 errors.append(f"Unstaged changes to unrelated file: {path}")

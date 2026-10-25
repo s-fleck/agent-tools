@@ -58,12 +58,22 @@ Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metada
 - **An overlay is vendored next to its base skill.** `r-package-style-guide-rlang` overrides one section of `r-package-style-guide`; copying both leaves the base's metadata untouched. A project that amends the overlay itself records it as a variant of the overlay skill, not of the base.
 - **Project-specific rules live in the project copy**; the canonical copy stays generic. Genericize the lesson when syncing back — keep the rule, drop the project's names, paths, and tokens.
 - **Rename the folder and the frontmatter `name` together** when a project copy is renamed; the canonical name stays in `upstream`. A rename in this repo is a MAJOR bump.
-- **Canonical changes land through a fetch/rebase loop.** See `skill-update` for the parallel-safe landing procedure (per-session worktree, rebase, re-validate, push with retry). Versions are allocated when the change reaches `origin/master`, not at edit time.
+- **Canonical changes land through a fetch/rebase loop.** See `skill-update` for the parallel-safe landing procedure (per-session worktree, rebase, re-validate, push with retry, wait for CI). Versions are allocated when the change reaches `origin/master`, not at edit time.
 
 ## Conventions
 
 - GitHub token: `github-issue/scripts/github-rest.py` reads `AGENT_GH_TOKEN`, then `$XDG_CONFIG_HOME/issue-pipeline/github-token` (default `~/.config/issue-pipeline/github-token`; one line, file 600), then a per-repository `<REPO>_GH_TOKEN` in the environment — repo name uppercased, `-`/`.` → `_` (e.g. `FIRE_GH_TOKEN` for `s-fleck/fire`) — then `GH_TOKEN` / `GITHUB_TOKEN`. It does not read `~/.Renviron`. Never commit or log it.
 - Vendored copies start byte-identical to this repo; project differences belong in the project's `AGENTS.md` and, once they touch a skill, in that copy's variant metadata.
+
+## Checks
+
+`Skill Validation` runs on every push and pull request. The same gate is available locally:
+
+```bash
+scripts/check.sh origin/master
+```
+
+It validates the canonical layout and metadata, then requires a strict version bump and a matching `[Unreleased]` entry for every changed skill. A push is not landed until the run for its SHA is green; see `AGENTS.md` for the failure loop.
 
 ## Vendoring
 
