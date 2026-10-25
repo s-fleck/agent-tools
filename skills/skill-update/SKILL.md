@@ -1,14 +1,15 @@
 ---
 name: skill-update
 description: >
-  Use when changing a skill — creating a skill, amending a project copy with
-  project-specific rules, marking a copy as a variant, pulling upstream changes
-  into a variant, bumping a skill's version, renaming or forking a skill,
-  writing its changelog entry, or syncing a project's amendments back into the
-  canonical skill repo. Also covers parallel-safe canonical landings.
+  Use when changing an OpenCode skill or command — creating a skill or slash
+  command, amending a project copy with project-specific rules, marking a copy
+  as a variant, pulling upstream changes into a variant, bumping a skill's
+  version, renaming or forking a skill, writing its changelog entry, syncing a
+  project's amendments back into the canonical repo, or updating a command's
+  template and frontmatter. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "4.0.2"
+  version: "4.1.0"
 ---
 
 # Skill Update
@@ -17,18 +18,32 @@ When a project vendors a skill this repo owns, the skill exists in two places: t
 
 Below, `<name>` is the canonical skill ID and `<project-name>` is the project copy's directory name; they differ only after a rename. `<project-skill-dir>` is the project's skills source that contains the copy.
 
+## Before You Edit
+
+Read `references/style-guide.md` before changing a skill or command. It contains the stable form rules: platform layout and discovery, canonical anatomy, frontmatter and variant metadata, attribution, versioning, changelog, and command authoring. It is not auto-loaded; read it explicitly.
+
+The procedure below is the state machine: which copy you are changing, how to preserve local amendments, and how to land the result. The style guide is the form contract.
+
+Non-negotiables:
+
+- Skills are directories (`skills/<name>/SKILL.md` canonically); commands are single files (`commands/<name>.md`).
+- Every changed skill bumps `metadata.version` and gets a `CHANGELOG.md` entry.
+- Canonical copies stay generic; project names, paths, tokens, and examples stay in the project copy.
+- A variant carries `variant`, `upstream`, `upstream_commit`, and `local_changes`; the exact contract is in the style guide.
+
 ## Scope
 
-This procedure covers skills with a canonical copy in `agent-tools`. It does not cover:
+This procedure covers skills and commands with a canonical copy in `agent-tools`. The variant and metadata contract applies to skills; commands use the simpler file-based lifecycle in the style guide's **Command Authoring** section. It does not cover:
 
 - **Third-party skills** — leave their metadata alone; fork under a new name if the project needs changes.
 - **Project-owned skills** — no canonical upstream and no variant markers; version them in the project, and use the fork/creation flow if one graduates to canonical.
 
-Initial vendoring is a straight directory copy; verify the copy is byte-identical, add no markers. See the repository README for the vendoring commands.
+Initial vendoring is a straight copy: the whole directory for a skill, the single `.md` file for a command. Verify the copy is byte-identical and add no markers. See the repository README for the vendoring commands.
 
 ## When To Use
 
 - Creating a skill and adding it to the canonical repo.
+- Creating or changing an OpenCode slash command, or vendoring one into a project.
 - Amending a project copy of a skill with a project-specific rule, example, or path.
 - Pulling upstream changes into a variant.
 - Syncing a project's amendments back into the canonical copy.
@@ -44,7 +59,9 @@ Initial vendoring is a straight directory copy; verify the copy is byte-identica
 | Canonical | `~/workspace/agent-tools/skills/<name>/` | `author` + `version`; no variant markers |
 | Project copy | `<project-skill-dir>/<project-name>/` | `author` + `version`, plus `variant`/`upstream`/`upstream_commit`/`local_changes` once amended |
 
-The project's skill sources are `.opencode/skills/`, `.claude/skills/`, and `.agents/skills/`; a project may also add custom paths in `opencode.json`. Project `.opencode` takes precedence over the compatibility directories, and explicit `skills` entries come later still, so a duplicate ID in any source can shadow the copy you meant to edit. Never edit a global copy (`~/.config/opencode/skills/`, `~/.claude/skills/`, `~/.agents/skills/`) thinking it is the project copy.
+A project copy may also be a flat `<project-skill-dir>/<project-name>.md`. It has no private directory for supporting files and no neighboring-file sample; prefer the directory form when the skill ships `references/`, scripts, or assets. The variant checker expects the directory form; validate a flat variant's frontmatter and diff manually.
+
+The style guide lists the discovery sources and precedence. Before editing, confirm which copy OpenCode actually loads; a duplicate ID in another source can shadow the copy you meant to edit. Never edit a global copy (`~/.config/opencode/skills/`, `~/.claude/skills/`, `~/.agents/skills/`) thinking it is the project copy.
 
 The canonical copy is upstream. A project copy is in one of these states:
 
@@ -78,6 +95,8 @@ find <project>/.opencode/skills <project>/.claude/skills <project>/.agents/skill
   -name SKILL.md 2>/dev/null | grep '/<project-name>/'
 ```
 
+A flat skill is `<project-skill-dir>/<project-name>.md`; the `find` above only matches the directory form. Check the source root for a flat file before concluding the copy is missing.
+
 If more than one source contains the ID, stop and resolve the duplicate before editing; OpenCode loads one by precedence.
 
 ## Parallel Updates — Landing Procedure
@@ -97,7 +116,7 @@ The canonical repo has no CI gate and accepts direct pushes to `master`. Multipl
    git -C "$WT" add skills/<name>/SKILL.md CHANGELOG.md README.md
    ```
 
-3. **Commit with the tentative version.** After editing, run the skill validator (`check_skill.py --repo .`) to verify the tentative version bump and changelog entry. Commit:
+3. **Commit with the tentative version.** After editing, run the skill validator (`python3 skills/skill-update/scripts/check_skill.py --repo .`) to verify the tentative version bump and changelog entry. Commit:
    ```bash
    git -C "$WT" commit -m "<skill>: <imperative summary> (<version>)"
    ```
@@ -149,98 +168,6 @@ If it is missing and cannot be cloned, stop and ask — do not substitute anothe
 **The shared checkout is a fetch anchor, not an edit surface.** When working on a canonical change, create a per-session worktree from `origin/master` (see **Parallel Updates — Landing Procedure**). When working in a project, edit the project copy and sync the generic lesson back separately.
 
 The current canonical state is always `origin/master` after `git fetch`. Do not read skill files from the shared working tree while another session may be mid-edit. Use `git show origin/master:skills/<name>/SKILL.md` or a detached worktree for snapshots.
-
-## Anatomy
-
-A skill is a directory `skills/<name>/` holding `SKILL.md`, plus optional `references/`, scripts, and assets. `SKILL.md` opens with YAML frontmatter:
-
-```yaml
----
-name: code-review                    # display label; keep equal to the folder name
-description: Use when ...            # required; third person, covers what it does + when to trigger
-license: MIT                         # optional
-compatibility: Requires <runtime> >= <version>    # optional
-metadata:                            # optional; flat string → string map, no nesting
-  author: Stefan Fleck
-  version: "4.0.2"
----
-```
-
-- The directory name is the skill ID: case-sensitive, and the repo convention is lowercase kebab-case. The frontmatter `name` is the display label; keep it equal to the folder name.
-- `description` is what an agent matches against. Without it the skill is never surfaced; keep the trigger keywords in the first sentence.
-- `metadata` values are strings, not lists or maps. A new field is a new key, never a nested structure. Quote `version`.
-
-## Metadata Contract
-
-Canonical copy — no project markers:
-
-```yaml
-metadata:
-  author: Stefan Fleck
-  version: "4.0.2"
-```
-
-Project copy with local amendments — four extra keys:
-
-```yaml
-metadata:
-  author: Stefan Fleck
-  version: "4.0.0+acme.1"
-  variant: acme
-  upstream: code-review@4.0.0
-  upstream_commit: 4f3a2c1d9e8b7a6f5e4d3c2b1a0f9e8d7c6b5a4f
-  local_changes: "Package name <project> instead of <pkg>; release timing defers to the project release skill"
-```
-
-- `variant` — the project slug that owns the amendments. Its presence is the signal that this copy is a variant.
-- `upstream` — `<canonical-skill-name>@<version>` the copy was **actually vendored from**, not the latest canonical version. If canonical has moved on, this stays at the old base until the variant is re-vendored. It carries the canonical name when the project copy was renamed.
-- `upstream_commit` — the full 40-hex object name of the canonical commit the copy was actually vendored from. This commit must be reachable from `origin/master`. It is the authoritative base for three-way merges and survives renames. Record it on the first amendment and on every re-vendor. Legacy variants without this field: use the `upstream` name and version to locate the base commit; if ambiguous or renamed, stop and ask, then record the hash once resolved.
-- `local_changes` — one line of plain text, semicolon-separated, one clause per current amendment. Cumulative: update it whenever an amendment is added, changed, or removed. It is a summary, not a changelog.
-- `version` — the base from `upstream` plus a build suffix `+<project-slug>.<n>` counting local amendment edits. Semver ignores build metadata when comparing precedence, so the suffix is a local counter, not a precedence claim. Use a lowercase, hyphenated project slug; SemVer build metadata allows only alphanumerics and hyphens.
-- If the last amendment is removed, re-vendor (or confirm the copy matches its base), then drop all four markers and set `version` to that canonical version.
-
-## Attribution
-
-- `metadata.author` lists the skill's authors, comma-separated, **original author first**:
-
-  ```yaml
-  metadata:
-    author: "Garrick Aden-Buie (@gadenbuie), Stefan Fleck"
-  ```
-
-- A fork **keeps** the original author's credit. Amendments add the amending author to the list; they never replace the original.
-- A skill that was rewritten from scratch names only its own author — say so in the changelog entry.
-- Carry the upstream `license:` line into the fork (e.g. `license: MIT` for a skill from a MIT-licensed collection) and never change it. If upstream has no `license` line, do not invent one.
-- Look the original author up before you credit them: the upstream file, the project's skill lock file (e.g. `.agents/skills/skills-lock.json`), and the upstream repository are the sources. A fork that ships without frontmatter has no recorded author — do not guess one.
-
-## Versioning
-
-Every change to a skill bumps its version. Nothing ships unbumped. This is the
-`semver` skill applied to skill guidance: a skill's rules are its public API,
-so changing or removing one is MAJOR.
-
-Classify the whole change set; the highest bump wins. Do not bump once per hunk.
-
-| Change | Bump | Example |
-|--------|------|---------|
-| Typo, wording, formatting, a clarification that does not change guidance | PATCH | 2.3.0 → 2.3.1 |
-| New guidance, new section, new option — additive, contradicts nothing | MINOR | 2.3.0 → 2.4.0 |
-| A rule changed or was removed, the frontmatter contract changed, or the skill was renamed | MAJOR | 2.3.0 → 3.0.0 |
-
-- A MAJOR bump resets MINOR and PATCH to 0; a MINOR bump resets PATCH to 0; a PATCH bump increments PATCH. Never bump a lower component without resetting the ones below it.
-- Never reuse a version number, not even after a revert.
-- A project copy's local amendments bump the suffix: `2.3.0+acme.1` → `2.3.0+acme.2`. The base stays at the upstream version the copy actually came from.
-- Re-vendoring resets the suffix: after pulling upstream 2.4.0 in and re-applying the local amendments, the copy is `2.4.0+acme.1`.
-- A rename in the canonical repo is a MAJOR bump; the changelog entry names the old skill.
-- New skills and forks start at `1.0.0`; pre-1.0 versions are not used for skills. Converting a variant into a fork is a project-copy rename plus a new canonical skill, not a MAJOR bump of the original.
-
-## Changelog
-
-- The canonical repo keeps one changelog at `~/workspace/agent-tools/CHANGELOG.md`, in Keep a Changelog + semver form, per the `changelog-style-guide` skill.
-- Every skill version bump gets an entry under `[Unreleased]`, with the skill name as the area prefix.
-- Entry shape: `- **<skill>:** <imperative summary> (<new version>)`.
-- If the previous version is still under `[Unreleased]`, **rewrite that entry** instead of adding a second one for the same feature.
-- A project copy's local amendments are recorded in the **project's** changelog (or `NEWS.md` for R packages), not the canonical one. The canonical changelog records only what landed upstream.
 
 ## Amending a Project Copy
 
@@ -298,7 +225,7 @@ Classify the whole change set; the highest bump wins. Do not bump once per hunk.
    - **Project-specific** — names a project file, function, path, token, example, or convention → stays in the project. Genericize the *lesson* into the canonical copy (keep the rule, drop the names) and keep the names in the project copy. If no generic lesson remains, sync nothing.
    - **Project-only artifact** — a section, script, or whole skill that only makes sense in that project → do not sync it. A whole skill that only makes sense there is project-owned, not a variant.
 4. Apply to the canonical copy: minimal diff, generic wording, no project names, paths, tokens, or examples. Use placeholders such as `<project>`, `<pkg>`, and `<REPO>_GH_TOKEN`.
-5. **Land the canonical change using the [Parallel Updates — Landing Procedure](#parallel-updates--landing-procedure).** The version is allocated at landing (after rebase). Bump per the table above and add or rewrite the changelog entry. If the previous version is still under `[Unreleased]`, rewrite that entry; never duplicate it.
+5. **Land the canonical change using the [Parallel Updates — Landing Procedure](#parallel-updates--landing-procedure).** The version is allocated at landing (after rebase). Bump per the versioning table in `references/style-guide.md` and add or rewrite the changelog entry. If the previous version is still under `[Unreleased]`, rewrite that entry; never duplicate it.
 6. After the canonical change lands on `origin/master`, re-vendor the canonical copy into the project and re-apply the remaining local amendments. If none remain, remove `variant`/`upstream`/`upstream_commit`/`local_changes` and leave the copy byte-identical; otherwise reset the suffix to `+<project-slug>.1`, set `upstream` to the new canonical version, set `upstream_commit` to the landed commit, and refresh `local_changes`.
 7. Update the project's changelog and the `AGENTS.md` pointer if the rule moved.
 8. Update README and cross-references if the canonical change affects them.
@@ -322,19 +249,19 @@ Classify the whole change set; the highest bump wins. Do not bump once per hunk.
 
 ## Validation
 
-A `check_skill.py` script ships with this skill (see `skills/skill-update/check_skill.py`). Run it in the relevant mode before committing.
+A `check_skill.py` script ships with this skill (see `skills/skill-update/scripts/check_skill.py`). Run it in the relevant mode before committing.
 
 ### Canonical change
 
-1. Frontmatter has `name` (aligned with the folder) and `description`; `metadata` values are strings; `version` is quoted.
-2. The version is bumped by the highest classification in the change set and not reused.
+1. Frontmatter matches `references/style-guide.md`: `name` aligned with the folder and `description` present; `metadata` values are strings; `version` is quoted.
+2. The version bump follows the style guide's versioning table, uses the highest classification in the change set, and is not reused.
 3. The copy carries no `variant`, `upstream`, `upstream_commit`, or `local_changes`.
 4. A changelog entry exists under `[Unreleased]`; if the previous version is still unreleased, the entry was rewritten rather than duplicated.
 5. The canonical copy is free of project-specific names, paths, tokens, examples, and skill names.
 6. A new, renamed, or forked skill has a README Contents row and vendoring command. For a rename, `rg '<old-name>'` finds no stale references.
 7. If the repo ships a doc check, run it. If the documented command is missing, fix the reference or skip; a broken doc-check reference is a repo bug, not a skill failure.
 8. The skill ID is unique across the repo and the directory name and frontmatter `name` agree.
-9. Run `check_skill.py --repo .` — it validates frontmatter, versions, changelog coverage, duplicate entries, README cross-references, and duplicate skill/version pairs.
+9. Run `python3 skills/skill-update/scripts/check_skill.py --repo .` — it validates frontmatter, versions, changelog coverage, duplicate entries, README cross-references, and duplicate skill/version pairs.
 
 ### Project amendment
 
@@ -346,13 +273,21 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/check_
 6. The edited copy is the project copy, not a global copy; no duplicate skill ID shadows it.
 7. If re-vendored, the base is updated, the suffix reset to `.1`, local amendments re-applied, `upstream` and `upstream_commit` current. If no amendments remain, the variant markers are gone.
 8. If the skill was renamed, the folder, frontmatter `name`, and project references agree.
-9. Run `check_skill.py --variant <dir> --canonical <repo>` — it validates metadata contract, hash reachability, version consistency, and drift.
+9. Run `python3 skills/skill-update/scripts/check_skill.py --variant <dir> --canonical <repo>` — it validates metadata contract, hash reachability, version consistency, and drift.
+
+### Command change
+
+1. The file is `commands/<name>.md` in the canonical repo (or `.opencode/commands/<name>.md` in a project), not a directory; nested paths produce the intended `/group/name`.
+2. The body is the template; there is no `template:` key in Markdown frontmatter. `$ARGUMENTS`/`$n` placeholders and the no-placeholder fallback behave as intended.
+3. Shell blocks only contain trusted commands; no untrusted argument is interpolated into a shell block.
+4. `agent`, `model`, and `subagent` values are valid; the command runs in the intended session or child session.
+5. A vendored command is byte-identical to the canonical file; project-specific changes are project-owned and recorded in the project's changelog.
 
 ### Landing validation
 
 Before pushing a canonical change:
 
-- Run `check_skill.py --check-bump <skill> --base origin/master` — it verifies a strict version increase over the base, a matching changelog entry, and a clean tree.
+- Run `python3 skills/skill-update/scripts/check_skill.py --check-bump <skill> --base origin/master` — it verifies a strict version increase over the base, a matching changelog entry, and a clean tree.
 
 ## Red Flags — Stop And Reconsider
 
@@ -377,3 +312,6 @@ Before pushing a canonical change:
 - You recorded a local (unpushed) canonical commit in `upstream_commit`.
 - You omitted `upstream_commit` on a new variant or re-vendor.
 - You used the fixed path `/tmp/opencode/skill-base-<name>` instead of `mktemp` for the base worktree.
+- You created a command as a directory, or expected it to support `references/` or scripts.
+- You put `template:` in Markdown command frontmatter, or placed untrusted arguments in a `!` block.
+- You added skill variant markers to a command.

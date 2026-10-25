@@ -36,6 +36,7 @@ name as the area prefix.
 - **skill-update:** Rework the variant lifecycle: distinguish stale copies from variants, record the actual vendoring base in `upstream`, reset semver components correctly, split canonical and project validation, add pull-upstream and drift-check procedures, and require README/cross-reference updates on create, rename, and fork; keep the fixed canonical checkout, `semver` delegation, and language-neutral rule (3.0.0)
 - **skill-update:** Add the parallel-landing procedure (per-session worktree, fetch/rebase/re-bump, changelog reconciliation, duplicate-lesson check), record the exact `upstream_commit` in variant metadata, and ship a skill metadata checker plus CI (4.0.0)
 - **skill-update:** Fix the checker script: skip Layout-table placeholders in the README Contents scan, fix the `git status --porcelain` path parsing, annotate the generic `CompletedProcess` type, and reformat to lint cleanly under a 100-char limit (4.0.2)
+- **skill-update:** Document OpenCode's actual skill and command layout and split the stable form rules into `references/style-guide.md`, keeping `SKILL.md` as the update and landing procedure; move the validator into `scripts/`; commands are single `.md` files, not skill directories (4.1.0)
 
 ## [0.2.1] - 2026-10-21
 

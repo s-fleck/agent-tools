@@ -32,7 +32,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/github-issue` | issue composition plus the self-contained GitHub REST helper (`github-rest.py`, vendored with the skill directory) | the project files issues on GitHub |
 | `skills/issue-comment` | post-solve issue comments | ditto |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
-| `skills/skill-update` | amending, versioning, renaming, syncing back skills; pulling upstream into a variant; parallel-safe canonical landings; the metadata contract for variants | the project amends its own copies |
+| `skills/skill-update` | OpenCode skill/command style guide, layout and discovery; amending, versioning, renaming, syncing back skills; pulling upstream into a variant; parallel-safe canonical landings; the metadata contract for variants | the project amends its own copies or ships slash commands |
 | `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change; `/issue-to-spec auto` picks and implements one | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
 | `agents/spec-reviewer` | read-only OpenSpec change reviewer | ditto |
 
@@ -68,7 +68,9 @@ Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metada
 
 ## Vendoring
 
-Copy the whole skill directory — skills ship with `references/`, scripts, and helpers next to `SKILL.md`.
+Copy the whole skill directory — skills ship with `references/`, scripts, and helpers next to `SKILL.md`. Do not copy `SKILL.md` alone.
+
+Commands are single `.md` files: copy the file, not a directory. A command has no supporting-file mechanism; put reusable material in a skill and load it from the command.
 
 ```bash
 P=/path/to/project

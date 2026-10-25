@@ -29,7 +29,7 @@ jobs:
 
       - name: Validate canonical repo
         run: |
-          python skills/skill-update/check_skill.py --repo . --strict
+          python skills/skill-update/scripts/check_skill.py --repo . --strict
 
       - name: Validate each skill's version bump on push
         run: |
@@ -38,7 +38,7 @@ jobs:
           for skill in $CHANGED; do
             if [ -n "$skill" ] && [ -d "skills/$skill" ]; then
               echo "Checking bump for $skill..."
-              python skills/skill-update/check_skill.py --check-bump "$skill" --base origin/master || exit 1
+              python skills/skill-update/scripts/check_skill.py --check-bump "$skill" --base origin/master || exit 1
             fi
           done
         shell: bash
