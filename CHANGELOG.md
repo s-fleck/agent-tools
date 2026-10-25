@@ -19,6 +19,7 @@ name as the area prefix.
 
 ### Changed
 
+- **github-issue:** Merge the `issue-comment` skill into `github-issue`: filing, maintaining, and commenting are one lifecycle; the title, body, label, comment, and signature rules move to `references/style-guide.md`, while the REST helper stays in the skill directory (5.0.0)
 - **issue-to-spec:** Parse the leading `auto` as an exact token instead of a substring, reject malformed, PR-URL, and foreign-repo targets before fetching, stop when a numeric target resolves to a PR, and ask before proceeding on closed issues
 - **issue-to-spec:** Treat auto-selection eligibility as selection-only: explicit `auto <N>` targets still hit the per-issue guardrails (draft/`needs-ruling` ask, active changes ask before implementation, product/archived/multi-subsystem stop)
 - **github-issue:** Add the whole-surface footprint check for a term and require naming/vocabulary rulings to check the project's binding vocabulary (4.1.0)
@@ -41,6 +42,10 @@ name as the area prefix.
 - **skill-update:** Add the parallel-landing procedure (per-session worktree, fetch/rebase/re-bump, changelog reconciliation, duplicate-lesson check), record the exact `upstream_commit` in variant metadata, and ship a skill metadata checker plus CI (4.0.0)
 - **skill-update:** Fix the checker script: skip Layout-table placeholders in the README Contents scan, fix the `git status --porcelain` path parsing, annotate the generic `CompletedProcess` type, and reformat to lint cleanly under a 100-char limit (4.0.2)
 - **skill-update:** Document OpenCode's actual skill and command layout and split the stable form rules into `references/style-guide.md`, keeping `SKILL.md` as the update and landing procedure; move the validator into `scripts/`; commands are single `.md` files, not skill directories (4.1.0)
+
+### Removed
+
+- **issue-comment:** Remove the standalone skill; its post-solve comment template and signature policy moved to `github-issue` (merged into `github-issue` 5.0.0)
 
 ## [0.2.1] - 2026-10-21
 

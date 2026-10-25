@@ -35,11 +35,11 @@ Auto mode runs the same flow, then implements via the `openspec-apply-change` sk
 
 ## GitHub access
 
-Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included). If the target is a URL, its repository must match the project's; extract the issue number only after that check.
+Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included) and the house style for issue bodies and comments. If the target is a URL, its repository must match the project's; extract the issue number only after that check.
 
 ## Project conventions
 
-Everything project-specific comes from the project's AGENTS.md and skills: issue skeleton, labels, ruling (⚖) handling, binding docs, checks to run, changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`), versioning (`semver`). Companions expected in `.opencode/`: `github-issue` and `issue-comment` skills, `spec-reviewer` subagent.
+Everything project-specific comes from the project's AGENTS.md and skills: issue skeleton, labels, ruling (⚖) handling, binding docs, checks to run, changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`), versioning (`semver`). Companions expected in `.opencode/`: the `github-issue` skill and the `spec-reviewer` subagent.
 
 ## Session title on completion
 
@@ -91,7 +91,7 @@ Load the `openspec-propose` skill and follow it; input = issue content (title, r
 
 Then add the `Change: <id>` line to the issue body (PATCH as above).
 
-Make sure `tasks.md` ends with: (a) update the changelog per the project's changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`; omit if the project has none) and choose the bump with `semver`, (b) post the post-solve comment per the `issue-comment` skill.
+Make sure `tasks.md` ends with: (a) update the changelog per the project's changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`; omit if the project has none) and choose the bump with `semver`, (b) post the post-solve comment per the `github-issue` skill.
 
 For bug issues, `tasks.md` must also *start* with reproducing the issue's claim as a failing test — that test is the authoritative claim check and must pass after implementation (per the project's definition of done).
 
@@ -150,7 +150,7 @@ These filters choose an issue for an unattended run. They do **not** validate an
 1. Load the `openspec-apply-change` skill and follow it for the change.
 2. Update the changelog per the project's changelog skill if one exists — R packages: `r-news-styleguide`; other projects: `changelog-style-guide`; omit if the project has none. The skill decides what gets an entry; never skip an entry the skill requires. Choose the version bump with the `semver` skill — a release takes the highest bump its entries require (breaking → major; `Added`/`Deprecated`/backwards-compatible `Changed` → minor; `Fixed`/internal-only/docs-only → patch). In R packages, rule 14 bumps on completion; elsewhere the bump is applied when `[Unreleased]` is cut. Run the skill's validation; release promotion happens at the post-archive boundary, not here.
 3. Run the checks required by the skill and the project's AGENTS.md (tests/lint), plus any check the change's tasks require.
-4. If implementation settled any ⚖ decisions, record them in the issue's Rulings section (body PATCH) first. Then post the post-solve comment per the `issue-comment` skill (`POST /issues/<N>/comments`).
+4. If implementation settled any ⚖ decisions, record them in the issue's Rulings section (body PATCH) first. Then post the post-solve comment per the `github-issue` skill (`POST /issues/<N>/comments`).
 5. Mark the session done: rename it with the same title plus a trailing ` ✓` (e.g. `#42 scanner: widen host matching ✓`) — the change is implemented and reported (see **Session title on completion**).
 6. Report: tasks completed, checks run + outcomes, files touched, changelog entry, comment URL.
 7. Stop: no archive, no commit. Suggest `/opsx-archive` (and a closing commit with `Fixes #<N>`) once the user has verified.
