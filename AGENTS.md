@@ -10,7 +10,8 @@ A change is done only when all of these hold:
 
 1. `scripts/check.sh origin/master` passes.
 2. Every changed skill has a strict semver bump and a matching `[Unreleased]`
-   changelog entry.
+   changelog entry. A new skill enters at `1.0.0`; the bump check accepts a
+   skill absent at the base only at that version.
 3. The `Validate Skills` run for the landed commit is green.
 4. The commit is on `origin/master`; no branch or worktree with the change is
    left behind.

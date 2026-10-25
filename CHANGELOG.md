@@ -11,6 +11,10 @@ name as the area prefix.
 
 ## [Unreleased]
 
+### Fixed
+
+- **skill-update:** Accept a new canonical skill at `1.0.0` in the bump gate instead of failing because it is absent at the base (5.0.1)
+
 ## [0.3.0] - 2026-10-25
 
 ### Added

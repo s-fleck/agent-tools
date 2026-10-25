@@ -9,7 +9,7 @@ description: >
   template and frontmatter. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "5.0.0"
+  version: "5.0.1"
 ---
 
 # Skill Update
@@ -267,7 +267,7 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/script
 ### Canonical change
 
 1. Frontmatter matches `references/style-guide.md`: `name` aligned with the folder and `description` present; `metadata` values are strings; `version` is quoted.
-2. The version bump follows the style guide's versioning table, uses the highest classification in the change set, and is not reused.
+2. The version bump follows the style guide's versioning table, uses the highest classification in the change set, and is not reused. A skill absent at the base is new and enters at `1.0.0`; an existing skill must be a strict increase.
 3. The copy carries no `variant`, `upstream`, `upstream_commit`, or `local_changes`.
 4. A changelog entry exists under `[Unreleased]`; if the previous version is still unreleased, the entry was rewritten rather than duplicated.
 5. The canonical copy is free of project-specific names, paths, tokens, examples, and skill names.
@@ -300,7 +300,7 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/script
 
 Before pushing a canonical change:
 
-- Run `scripts/check.sh origin/master` — it runs the canonical check and the bump check for every changed skill. The underlying command is `python3 skills/skill-update/scripts/check_skill.py --check-bump <skill> --base origin/master`; it verifies a strict version increase over the base, a matching changelog entry, and a clean tree.
+- Run `scripts/check.sh origin/master` — it runs the canonical check and the bump check for every changed skill. The underlying command is `python3 skills/skill-update/scripts/check_skill.py --check-bump <skill> --base origin/master`; it verifies a strict version increase over the base or `1.0.0` for a new skill, a matching changelog entry, and a clean tree.
 
 After pushing:
 

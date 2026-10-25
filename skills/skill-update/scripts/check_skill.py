@@ -511,80 +511,40 @@ def validate_variant(
     return errors
 
 
-def validate_bump(skill_name: str, base_rev: str, repo: Path) -> list[str]:
-    errors: list[str] = []
-
-    # Get current version from the base revision.
-    base_skill = git_show(f"skills/{skill_name}/SKILL.md", base_rev, repo)
-    if not base_skill:
-        errors.append(f"Skill {skill_name} not found at {base_rev}")
-        return errors
-    base_version = _parse_version_from_text(base_skill)
-    if not base_version:
-        errors.append(
-            f"Could not parse base version for {skill_name} at {base_rev}"
-        )
-        return errors
-
-    # Get working-tree version.
-    skill_dir = repo / "skills" / skill_name
-    if not skill_dir.exists():
-        errors.append(f"Skill directory {skill_name} not found in working tree")
-        return errors
-    fm = parse_frontmatter(skill_dir / "SKILL.md")
-    work_version = fm.metadata.get("version", "")
-    if not work_version:
-        errors.append(f"Working tree {skill_name} has no metadata.version")
-        return errors
-
-    # Strict semver increase check.
-    def parse_semver(v: str) -> tuple[int, int, int]:
-        m = re.match(r"^(\d+)\.(\d+)\.(\d+)$", v)
-        if not m:
-            raise ValueError(f"Invalid semver: {v}")
-        return int(m.group(1)), int(m.group(2)), int(m.group(3))
-
-    try:
-        bv = parse_semver(base_version)
-        wv = parse_semver(work_version)
-    except ValueError as e:
-        errors.append(str(e))
-        return errors
-
-    is_increase = wv > bv
-    if not is_increase:
-        errors.append(
-            f"Version {work_version} is not a strict increase over base {base_version}"
-        )
-
-    # Check changelog entry under [Unreleased].
+def _changelog_has_unreleased_entry(
+    repo: Path, skill_name: str, version: str
+) -> bool:
+    """Return True when [Unreleased] has an entry for skill@version."""
     changelog = repo / "CHANGELOG.md"
-    if changelog.exists():
-        cl_text = changelog.read_text(encoding="utf-8")
-        in_unreleased = False
-        found = False
-        for line in cl_text.splitlines():
-            if line.startswith("## [Unreleased]"):
-                in_unreleased = True
-                continue
-            if line.startswith("## [") and in_unreleased:
-                in_unreleased = False
-            if in_unreleased:
-                m = re.match(
-                    rf"^-\s+\*\*{re.escape(skill_name)}:\*\s*"
-                    r".*\((\d+\.\d+\.\d+)\)\s*$",
-                    line,
-                )
-                if m and m.group(1) == work_version:
-                    found = True
-                    break
-        if not found:
-            errors.append(
-                f"No matching changelog entry under [Unreleased] "
-                f"for {skill_name}@{work_version}"
+    if not changelog.exists():
+        return False
+    in_unreleased = False
+    for line in changelog.read_text(encoding="utf-8").splitlines():
+        if line.startswith("## [Unreleased]"):
+            in_unreleased = True
+            continue
+        if line.startswith("## [") and in_unreleased:
+            in_unreleased = False
+        if in_unreleased:
+            m = re.match(
+                rf"^-\s+\*\*{re.escape(skill_name)}:\*\s*"
+                r".*\((\d+\.\d+\.\d+)\)\s*$",
+                line,
             )
+            if m and m.group(1) == version:
+                return True
+    return False
 
-    # Check for unstaged changes to unrelated files.
+
+def _parse_semver(value: str) -> tuple[int, int, int]:
+    m = re.match(r"^(\d+)\.(\d+)\.(\d+)$", value)
+    if not m:
+        raise ValueError(f"Invalid semver: {value}")
+    return int(m.group(1)), int(m.group(2)), int(m.group(3))
+
+
+def _check_unrelated_files(skill_name: str, repo: Path) -> list[str]:
+    errors: list[str] = []
     res = run_git(["status", "--porcelain"], cwd=repo)
     if res.returncode == 0:
         for line in res.stdout.splitlines():
@@ -603,7 +563,62 @@ def validate_bump(skill_name: str, base_rev: str, repo: Path) -> list[str]:
             )
             if not allowed:
                 errors.append(f"Unstaged changes to unrelated file: {path}")
+    return errors
 
+
+def validate_bump(skill_name: str, base_rev: str, repo: Path) -> list[str]:
+    errors: list[str] = []
+
+    skill_dir = repo / "skills" / skill_name
+    if not skill_dir.exists():
+        errors.append(f"Skill directory {skill_name} not found in working tree")
+        return errors
+    fm = parse_frontmatter(skill_dir / "SKILL.md")
+    work_version = fm.metadata.get("version", "")
+    if not work_version:
+        errors.append(f"Working tree {skill_name} has no metadata.version")
+        return errors
+
+    # A skill absent at the base is new; it enters at 1.0.0. An existing
+    # skill must be a strict semver increase over its base version.
+    base_skill = git_show(f"skills/{skill_name}/SKILL.md", base_rev, repo)
+    if base_skill:
+        base_version = _parse_version_from_text(base_skill)
+        if not base_version:
+            errors.append(
+                f"Could not parse base version for {skill_name} at {base_rev}"
+            )
+            return errors
+        try:
+            bv = _parse_semver(base_version)
+            wv = _parse_semver(work_version)
+        except ValueError as e:
+            errors.append(str(e))
+            return errors
+        if wv <= bv:
+            errors.append(
+                f"Version {work_version} is not a strict increase over base "
+                f"{base_version}"
+            )
+    else:
+        try:
+            wv = _parse_semver(work_version)
+        except ValueError as e:
+            errors.append(str(e))
+            return errors
+        if wv != (1, 0, 0):
+            errors.append(
+                f"New skill {skill_name} must start at 1.0.0 "
+                f"(found {work_version})"
+            )
+
+    if not _changelog_has_unreleased_entry(repo, skill_name, work_version):
+        errors.append(
+            f"No matching changelog entry under [Unreleased] "
+            f"for {skill_name}@{work_version}"
+        )
+
+    errors.extend(_check_unrelated_files(skill_name, repo))
     return errors
 
 
