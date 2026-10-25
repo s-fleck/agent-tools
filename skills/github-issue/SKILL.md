@@ -1,14 +1,14 @@
 ---
 name: github-issue
-description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style — and when maintaining an issue's body or labels, posting or editing the post-solve implementation comment, or applying the signature and traceability policy to agent-authored GitHub content. Carries the self-contained GitHub REST helper (`github-rest.py`, a skill script — not the `gh` CLI); label resolution lives in `references/labels.md`.
+description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style — and when maintaining an issue's body or labels, posting or editing the post-solve implementation comment, or applying the signature and traceability policy to agent-authored GitHub content. Carries the self-contained GitHub REST helper (`github-rest.py`, a skill script — not the `gh` CLI); label resolution and read-only triage signals live in `references/labels.md`.
 metadata:
   author: Stefan Fleck
-  version: "6.0.0"
+  version: "7.0.0"
 ---
 
 # GitHub Issue
 
-Compose and maintain issues in the project's GitHub issue registry, and post the comments that close the loop. AGENTS.md rules apply (registry policy wins); this skill is the procedure. Read `references/labels.md` before applying, changing, or checking any label — it owns the label resolution order (defaults, AGENTS.md, repository labels) and the project's deny rules.
+Compose and maintain issues in the project's GitHub issue registry, and post the comments that close the loop. AGENTS.md rules apply (registry policy wins); this skill is the procedure. Read `references/labels.md` before applying, changing, or checking any label — it owns the label resolution order (defaults, AGENTS.md, repository labels), the project's write and read deny rules, and the read-only triage signals (`wontfix`/`invalid`/`duplicate`/`question`, project blockers, ready gates, and classification hints) that decide whether work may start.
 
 Read `references/style-guide.md` before composing or editing an issue or comment. It holds the stable form contract — title grammar, body skeleton, comment template, signature policy, and reference notation. Label semantics live in `references/labels.md`. Do not restate either here.
 
@@ -21,7 +21,7 @@ Read `references/style-guide.md` before composing or editing an issue or comment
    - Verify behavior empirically where cheap, then stamp the Problem per the style guide.
    - State the measured numbers, not the expected direction: a mechanism can move a figure up or down, so a claim like "the figures dip" needs its sign checked against the real data.
    - A term's footprint is a whole-surface measurement, not a file list: sweep the source tree, tests, and binding docs with a grep and quote the measured hits — a term that lives in a fixture, a schema, or a helper script is part of the footprint.
-4. Resolve the labels per `references/labels.md` before composing the final output, and apply them when filing; if a needed label lacks metadata, ask now. Do not choose names from memory.
+4. Resolve the labels per `references/labels.md` before composing the final output, and apply the applicable write-role labels when filing (`draft` is human-applied, never self-applied); never apply a read-only triage signal. If a needed label lacks metadata, ask now. Do not choose names from memory.
 5. When composing in chat, output the issue markdown only — no commentary around it. The label question round happens before this output, not inside it.
 
 ## Maintain an Issue
@@ -29,6 +29,7 @@ Read `references/style-guide.md` before composing or editing an issue or comment
 - `PATCH /issues/<N>` replaces the whole body: re-fetch immediately before editing and keep everything unrelated verbatim — never PATCH from a cached body.
 - Rulings (⚖) are decided by editing the issue's Rulings section; follow-up work becomes new issues.
 - Remove the resolved needs-ruling label (default `needs-ruling`) once every ruling is decided; resolve names via `references/labels.md`.
+- Never add, change, or remove a read-only triage label (`wontfix`, `invalid`, `duplicate`, `question`, `stale`, project blockers/ready gates, or classification hints) on your own initiative. Read them as disposition signals per `references/labels.md`; an explicit user instruction to change one is a one-off, not a role.
 
 ## Post the Post-Solve Comment
 
