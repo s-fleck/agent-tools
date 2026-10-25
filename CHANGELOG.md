@@ -11,6 +11,8 @@ name as the area prefix.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-25
+
 ### Added
 
 - **issue-to-spec:** Auto mode accepts an explicit issue (`/issue-to-spec auto 42`) and still implements after review

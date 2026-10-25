@@ -1,6 +1,6 @@
 # agent-tools — archival source of agent tooling
 
-**Version:** 0.2.1 — see [CHANGELOG.md](CHANGELOG.md) for the release history. Releases are tagged `v<version>`.
+**Version:** 0.3.0 — see [CHANGELOG.md](CHANGELOG.md) for the release history. Releases are tagged `v<version>`.
 
 Canonical copies of opencode tooling (skills, commands, subagents, checks) that projects **copy from** when needed. It is deliberately not a live tool directory:
 
