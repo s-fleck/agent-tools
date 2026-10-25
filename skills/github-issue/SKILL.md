@@ -1,16 +1,16 @@
 ---
 name: github-issue
-description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style — and when maintaining an issue's body or labels, posting or editing the post-solve implementation comment, or applying the signature and traceability policy to agent-authored GitHub content. Carries the self-contained GitHub REST helper (`github-rest.py`, a skill script — not the `gh` CLI).
+description: Use when filing, drafting, or reformatting a GitHub issue — turning notes or discussion into an issue, filing follow-up work from a solved issue, or checking an issue body against house style — and when maintaining an issue's body or labels, posting or editing the post-solve implementation comment, or applying the signature and traceability policy to agent-authored GitHub content. Carries the self-contained GitHub REST helper (`github-rest.py`, a skill script — not the `gh` CLI); label resolution lives in `references/labels.md`.
 metadata:
   author: Stefan Fleck
-  version: "5.0.0"
+  version: "6.0.0"
 ---
 
 # GitHub Issue
 
-Compose and maintain issues in the project's GitHub issue registry, and post the comments that close the loop. AGENTS.md rules apply (registry policy wins); this skill is the procedure.
+Compose and maintain issues in the project's GitHub issue registry, and post the comments that close the loop. AGENTS.md rules apply (registry policy wins); this skill is the procedure. Read `references/labels.md` before applying, changing, or checking any label — it owns the label resolution order (defaults, AGENTS.md, repository labels) and the project's deny rules.
 
-Read `references/style-guide.md` before composing or editing an issue or comment. It holds the stable form contract — title grammar, body skeleton, label semantics, comment template, signature policy, and reference notation. Do not restate it here.
+Read `references/style-guide.md` before composing or editing an issue or comment. It holds the stable form contract — title grammar, body skeleton, comment template, signature policy, and reference notation. Label semantics live in `references/labels.md`. Do not restate either here.
 
 ## File an Issue
 
@@ -21,14 +21,14 @@ Read `references/style-guide.md` before composing or editing an issue or comment
    - Verify behavior empirically where cheap, then stamp the Problem per the style guide.
    - State the measured numbers, not the expected direction: a mechanism can move a figure up or down, so a claim like "the figures dip" needs its sign checked against the real data.
    - A term's footprint is a whole-surface measurement, not a file list: sweep the source tree, tests, and binding docs with a grep and quote the measured hits — a term that lives in a fixture, a schema, or a helper script is part of the footprint.
-4. Apply the labels per the style guide.
-5. When composing in chat, output the issue markdown only — no commentary around it.
+4. Resolve the labels per `references/labels.md` before composing the final output, and apply them when filing; if a needed label lacks metadata, ask now. Do not choose names from memory.
+5. When composing in chat, output the issue markdown only — no commentary around it. The label question round happens before this output, not inside it.
 
 ## Maintain an Issue
 
 - `PATCH /issues/<N>` replaces the whole body: re-fetch immediately before editing and keep everything unrelated verbatim — never PATCH from a cached body.
 - Rulings (⚖) are decided by editing the issue's Rulings section; follow-up work becomes new issues.
-- Remove the `needs-ruling` label once every ruling is decided.
+- Remove the resolved needs-ruling label (default `needs-ruling`) once every ruling is decided; resolve names via `references/labels.md`.
 
 ## Post the Post-Solve Comment
 
@@ -50,7 +50,7 @@ python3 .opencode/skills/github-issue/github-rest.py --paginate GET "/issues?sta
 python3 .opencode/skills/github-issue/github-rest.py POST /issues /tmp/opencode/issue.json                      # create: {"title", "body", "labels"}
 python3 .opencode/skills/github-issue/github-rest.py PATCH /issues/42 /tmp/opencode/issue-42-body.md            # rulings, `Change:` link
 python3 .opencode/skills/github-issue/github-rest.py POST /issues/42/comments /tmp/opencode/issue-42-comment.md
-python3 .opencode/skills/github-issue/github-rest.py DELETE /issues/42/labels/needs-ruling
+python3 .opencode/skills/github-issue/github-rest.py DELETE /issues/42/labels/needs-ruling         # resolved needs-ruling label
 ```
 
 - `--paginate` follows `Link rel=next` for a `GET` list endpoint and prints one JSON array; it refuses a next link outside the API host. Without it, one page is returned.
@@ -60,7 +60,7 @@ python3 .opencode/skills/github-issue/github-rest.py DELETE /issues/42/labels/ne
 
 ## Lifecycle
 
-- One issue = one shippable unit of work: an agent session or a focused pass can finish it; if not, split it. Issues carry context, not designs — when work on a cluster starts, create its OpenSpec change, link it in the body (`Change: <id>`), and let the design live in the change.
+- One issue = one shippable unit of work: an agent session or a focused pass can finish it; if not, split it. Issues carry context, not designs — when work on a cluster starts, create the project's change artifact (for OpenSpec, `Change: <id>`), link it in the body, and let the design live there.
 - Post-solve summary comments follow **Post the Post-Solve Comment** above.
 - Signature and traceability for all agent-authored GitHub content are specified once in the style guide.
 - Close with `Fixes #<N>` in the archiving/closing commit.

@@ -25,7 +25,7 @@ Rules:
 - Normalize `42` and `#42` to `<N>`. For a URL, require the same repository as the project and extract the issue number only after that check; reject `/pull/` URLs. A numeric target that resolves to a PR also stops.
 - With an explicit target, skip issue selection entirely (both the picker and Auto mode's Selection; do not fetch the open-issue list). An explicit target still goes through the step-1/step-2 guardrails.
 
-**Interactive picker (manual mode, no target):** fetch the open issues (`--paginate GET "/issues?state=open&per_page=100"`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark product-direction issues (`product`, or the project's equivalent such as `idea`) in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
+**Interactive picker (manual mode, no target):** fetch the open issues (`--paginate GET "/issues?state=open&per_page=100"`, see below) and make ONE question-tool call: one option per issue, label `#<n> — <short title>`, description = labels + one-line gist. Ignore entries with a `pull_request` field (PRs), and mark product-direction issues (resolved from the `github-issue` labels reference; default `product`, or a project equivalent such as `idea`) in the description as "routes to the project roadmap" instead of offering them as work. Continue with the chosen number as `<N>`.
 
 `auto` is the **execution mode** ("spec, review, then implement"). The target is separate: supply one and auto skips selection; omit it and auto selects. Bare `auto` never opens the picker.
 
@@ -35,11 +35,13 @@ Auto mode runs the same flow, then implements via the `openspec-apply-change` sk
 
 ## GitHub access
 
-Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included) and the house style for issue bodies and comments. If the target is a URL, its repository must match the project's; extract the issue number only after that check.
+Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included), the house style for issue bodies and comments, and the labels reference (`references/labels.md`), which resolves the label roles used below. If the target is a URL, its repository must match the project's; extract the issue number only after that check.
 
 ## Project conventions
 
-Everything project-specific comes from the project's AGENTS.md and skills: issue skeleton, labels, ruling (⚖) handling, binding docs, checks to run, changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`), versioning (`semver`). Companions expected in `.opencode/`: the `github-issue` skill and the `spec-reviewer` subagent.
+Everything project-specific comes from the project's AGENTS.md and skills: issue skeleton, ruling (⚖) handling, binding docs, checks to run, changelog skill (R packages: `r-news-styleguide`; other projects: `changelog-style-guide`), versioning (`semver`). Companions expected in `.opencode/`: the `github-issue` skill and the `spec-reviewer` subagent.
+
+**Label roles.** Resolve the project's labels from the `github-issue` labels reference (`references/labels.md`) before triage. This command uses four roles: *priority* (default `P1`–`P3`), *needs-ruling* (default `needs-ruling`), *product-direction* (default `product`, sometimes `idea`), and *draft* (default `draft`). The resolved names win over the defaults named below.
 
 ## Session title on completion
 
@@ -61,29 +63,29 @@ Never append ` ✓` to a change that is only specced, blocked, or paused. If the
 
 ## 1. Check out the issue
 
-Fetch issue + comments; read title, labels, body (sections per the project's conventions — typically Problem / Fix / Rulings / Done when / Out of scope), and comments.
+Resolve the label roles from the `github-issue` labels reference (see **Label roles**), then fetch issue + comments; read title, labels, body (sections per the project's conventions — typically Problem / Fix / Rulings / Done when / Out of scope), and comments.
 
 Then rename the session so it reflects the work for the rest of the run: run the rename command above with `#<N> <issue title trimmed to ~60 chars>` (e.g. `#42 scanner: widen host matching`). Do this before triage; if the rename call fails, note it once and continue. This title marks the work as *in progress* — the ✓ is added only when the change is finished (see **Session title on completion**).
 
 Guardrails:
-- Label `product` (or the project's product-direction label, e.g. `idea`) → stop and tell the user it routes to the project roadmap, not an OpenSpec change.
+- The product-direction label (default `product`, project equivalent e.g. `idea`) → stop and tell the user it routes to the project roadmap, not an OpenSpec change.
 - The fetched object has a `pull_request` field → stop; this command works on issues only.
 - The issue is `closed` and has no active or archived change → report the state and ask before proceeding (the picker and Auto mode's Selection only offer open issues).
 - Body already contains `Change: <id>`: if `openspec/changes/<id>/` exists, continue it instead of creating a new change (skip step 3 creation, still review). If it exists only under `openspec/changes/archive/`, the issue is effectively solved — report that and stop; closure comes from the archiving commit's `Fixes #<N>`, don't re-spec.
-- Label `draft`: the body is a human-written stub — vague by design. Batch clarifying questions to the user first (step-2 style), then rewrite the whole issue to house style via the `github-issue` skill — title, body (skeleton filled, claims verified), and labels (apply the project's priority tier) — and remove the `draft` label before continuing. Human-written body/comments on a `draft` issue may be rewritten without asking (per the `github-issue` skill).
+- The draft label (default `draft`): the body is a human-written stub — vague by design. Batch clarifying questions to the user first (step-2 style), then rewrite the whole issue to house style via the `github-issue` skill — title, body (skeleton filled, claims verified), and labels (apply the resolved priority tier) — and remove the draft label before continuing. Human-written body/comments on a draft issue may be rewritten without asking (per the `github-issue` skill).
 - One issue = one shippable unit (AGENTS.md). If the issue spans several independent subsystems, say so before speccing and propose a split.
 - Verify the issue's refs and load-bearing claims against the current codebase: refs must resolve; claims must be verified empirically where cheap (run the function or query, grep for an alleged absence). Fix stale refs/claims in the body (PATCH rule in the `github-issue` skill) and stamp the body with the verification line `verified YYYY-MM-DD (model: <model_id>)` (per the `github-issue` skill; the stamp is the issue's signature). A false load-bearing claim → stop and report before speccing; never spec from an unverified claim.
 
 ## 2. Resolve open questions first
 
-Look for undecided rulings: `needs-ruling` label, ⚖ items with no decision, explicit open questions in body/comments. If none → continue to step 3.
+Look for undecided rulings: the needs-ruling label (default `needs-ruling`), ⚖ items with no decision, explicit open questions in body/comments. If none → continue to step 3.
 
 If any exist, batch ALL of them into ONE question-tool call, with a recommendation/options per question. Do not guess decisions.
 
 After the user answers:
 1. Record each decision by editing the Rulings section (preserve the rest of the body verbatim) and PATCH the issue.
-2. Remove the `needs-ruling` label once every ruling is decided (skip if not present):
-   `DELETE /issues/<N>/labels/needs-ruling`
+2. Remove the needs-ruling label once every ruling is decided (skip if not present):
+   `DELETE /issues/<N>/labels/<resolved needs-ruling label>` (default: `DELETE /issues/<N>/labels/needs-ruling`)
 
 ## 3. Create the OpenSpec change
 
@@ -128,20 +130,20 @@ Questions still pause the run when a human decision is genuinely required.
 
 ### Selection (only when no target)
 
-Fetch `--paginate GET "/issues?state=open&per_page=100"` and pick the best eligible issue:
-- Exclude: PR entries, product-direction issues (`product`/`idea`), `needs-ruling` issues, `draft` issues (stubs need an interactive rewrite), issues with unresolved ⚖ items or explicit open questions in body/comments, issues spanning several independent subsystems, issues too vague to spec without guessing.
-- Prefer explicit acceptance criteria ("Done when"), then priority labels per the project conventions (e.g. `P1` > `P2` > `P3` > unlabeled), then lowest issue number.
+Resolve the label roles (see **Label roles**), fetch `--paginate GET "/issues?state=open&per_page=100"`, and pick the best eligible issue:
+- Exclude: PR entries, issues carrying the product-direction, needs-ruling, or draft label (stubs need an interactive rewrite), issues with unresolved ⚖ items or explicit open questions in body/comments, issues spanning several independent subsystems, issues too vague to spec without guessing.
+- Prefer explicit acceptance criteria ("Done when"), then the resolved priority tier (default `P1` > `P2` > `P3` > unlabeled), then lowest issue number.
 - Skip issues that already carry a `Change: <id>` link: an active `openspec/changes/<id>/` may be mid-flight in another session, and an archived one is effectively solved. Both can be addressed explicitly with `/issue-to-spec auto <N>`: active changes are reviewed and ask before implementation; archived ones stop with the report.
 - Announce the pick and a one-line reason, then rename the session (see **Session title on completion**) with `#<N> <issue title trimmed to ~60 chars>`; the ` ✓` comes later, when the change is finished. If nothing is eligible, stop and report why; never fall back to the interactive picker.
 
-These filters choose an issue for an unattended run. They do **not** validate an explicit target: `auto <N>` skips Selection and relies on the step-1/step-2 guardrails instead. A product issue still stops; a draft or `needs-ruling` issue asks; a multi-subsystem or vague issue stops; an active change is reviewed and then asks before implementation; an archived change stops.
+These filters choose an issue for an unattended run. They do **not** validate an explicit target: `auto <N>` skips Selection and relies on the step-1/step-2 guardrails instead. A product-direction issue still stops; a draft or needs-ruling issue asks; a multi-subsystem or vague issue stops; an active change is reviewed and then asks before implementation; an archived change stops.
 
 ### Execution deltas for steps 1–7
 
 - Step 1's claim verification is blocking in Auto mode — the run implements without a hand-off review, so a false load-bearing claim stops it.
 - Step 2 may find rulings on an explicit target — batch-ask instead of guessing.
 - Step 1's `Change: <id>` guardrail: for an active change, review it as usual, then **ask** whether to implement it here before continuing (it may be mid-flight in another session). For an archived change, stop as usual.
-- A `draft` or `needs-ruling` target is allowed under explicit `auto <N>`: the user is present, so run the interactive rewrite and ruling steps. Bare auto still excludes both during Selection.
+- A draft or needs-ruling target is allowed under explicit `auto <N>`: the user is present, so run the interactive rewrite and ruling steps. Bare auto still excludes both during Selection.
 - Steps 6 and 7-docs: batch-ask any human decisions, including needed binding-doc edits (AGENTS.md: doc edits are always explicit).
 - Step 7 summary happens, then continue below instead of handing off.
 

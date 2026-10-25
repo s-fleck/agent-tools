@@ -19,6 +19,8 @@ name as the area prefix.
 
 ### Changed
 
+- **github-issue:** Define label resolution in `references/labels.md`: skill defaults, project AGENTS.md overrides and deny rules, repository label descriptions, and ask-before-use for incomplete metadata; the style guide keeps the form contract (6.0.0)
+- **issue-to-spec:** Resolve label roles through the `github-issue` labels reference instead of hardcoding `product`/`idea`, `draft`, `needs-ruling`, and the priority tiers
 - **github-issue:** Merge the `issue-comment` skill into `github-issue`: filing, maintaining, and commenting are one lifecycle; the title, body, label, comment, and signature rules move to `references/style-guide.md`, while the REST helper stays in the skill directory (5.0.0)
 - **issue-to-spec:** Parse the leading `auto` as an exact token instead of a substring, reject malformed, PR-URL, and foreign-repo targets before fetching, stop when a numeric target resolves to a PR, and ask before proceeding on closed issues
 - **issue-to-spec:** Treat auto-selection eligibility as selection-only: explicit `auto <N>` targets still hit the per-issue guardrails (draft/`needs-ruling` ask, active changes ask before implementation, product/archived/multi-subsystem stop)
