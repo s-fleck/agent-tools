@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """GitHub REST helper for the issue registry (see SKILL.md for usage).
 
-This is a standard-library script that lives next to SKILL.md, not the `gh` CLI:
-no `gh` binary is installed for this workflow and none is assumed. Invoke it by
-path with `python3`; it is not executable and not on `PATH`.
+This is a standard-library script that lives in the skill's `scripts/`
+directory, not the `gh` CLI: no `gh` binary is installed for this workflow and
+none is assumed. Invoke it by path with `python3`; it is not executable and not
+on `PATH`.
 """
 from __future__ import annotations
 

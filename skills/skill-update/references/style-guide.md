@@ -57,7 +57,17 @@ References: <https://opencode.ai/v2/docs/skills/> and <https://opencode.ai/v2/do
 
 ## Canonical Skill Anatomy
 
-The canonical repo uses the directory form only: `skills/<name>/SKILL.md`, plus optional `references/`, `scripts/`, and assets. The checker (`scripts/check_skill.py`) only recognizes `skills/<dir>/SKILL.md`; do not add flat or grouped skills here.
+The canonical repo uses the directory form only:
+
+```text
+skills/<name>/
+├── SKILL.md
+├── references/
+├── scripts/
+└── assets/
+```
+
+Only those four entries may appear at the skill root: `SKILL.md` plus optional `references/`, `scripts/`, and `assets/` directories. Put helper scripts in `scripts/` (never loose at the root), reference documents in `references/`, and static or binary assets in `assets/`. IDs are lowercase kebab-case, 1–64 characters (`^[a-z0-9]+(?:-[a-z0-9]+)*$`). The checker enforces this layout; it rejects flat skills (`skills/<name>.md`), directories without `SKILL.md`, grouped or nested skills, and any other root entry.
 
 `SKILL.md` opens with YAML frontmatter:
 
@@ -76,7 +86,7 @@ metadata:                            # optional; flat string → string map, no 
 - The directory name is the skill ID: case-sensitive, and the repo convention is lowercase kebab-case. The frontmatter `name` is the display label; keep it equal to the folder name.
 - `description` is what an agent matches against. Without it the skill is never surfaced; keep the trigger keywords in the first sentence.
 - `metadata` values are strings, not lists or maps. A new field is a new key, never a nested structure. Quote `version`.
-- Supporting files are referenced relative to `SKILL.md`; use `references/<file>` or `scripts/<file>` and say when to read or run them. Do not rely on auto-loading.
+- Supporting files are referenced relative to `SKILL.md`; use `references/<file>`, `scripts/<file>`, or `assets/<file>` and say when to read or run them. Do not rely on auto-loading.
 
 ## Metadata Contract
 

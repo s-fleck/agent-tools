@@ -29,7 +29,7 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/r-data-table` | `data.table` semantics and footguns | the package uses `data.table` |
 | `skills/changelog-style-guide` | Keep a Changelog for non-R projects | a non-R project |
 | `skills/semver` | SemVer version bumps for releases — **companion**, vendor with either changelog skill | any project that releases |
-| `skills/github-issue` | issue composition and post-solve comments, label resolution and read-only triage signals (`references/labels.md`), plus the self-contained GitHub REST helper (`github-rest.py`, vendored with the skill directory) | the project files or comments on GitHub issues |
+| `skills/github-issue` | issue composition and post-solve comments, label resolution and read-only triage signals (`references/labels.md`), plus the self-contained GitHub REST helper (`scripts/github-rest.py`, vendored with the skill directory) | the project files or comments on GitHub issues |
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
 | `skills/skill-update` | OpenCode skill/command style guide, layout and discovery; amending, versioning, renaming, syncing back skills; pulling upstream into a variant; parallel-safe canonical landings; the metadata contract for variants | the project amends its own copies or ships slash commands |
 | `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change with label/ownership triage; `/issue-to-spec auto [<issue>]` picks or takes an issue and implements it | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
@@ -62,12 +62,12 @@ Every skill carries `metadata.version` (semver, `MAJOR.MINOR.PATCH`) and `metada
 
 ## Conventions
 
-- GitHub token: `github-rest.py` reads `AGENT_GH_TOKEN`, then `$XDG_CONFIG_HOME/issue-pipeline/github-token` (default `~/.config/issue-pipeline/github-token`; one line, file 600), then a per-repository `<REPO>_GH_TOKEN` in the environment — repo name uppercased, `-`/`.` → `_` (e.g. `FIRE_GH_TOKEN` for `s-fleck/fire`) — then `GH_TOKEN` / `GITHUB_TOKEN`. It does not read `~/.Renviron`. Never commit or log it.
+- GitHub token: `github-issue/scripts/github-rest.py` reads `AGENT_GH_TOKEN`, then `$XDG_CONFIG_HOME/issue-pipeline/github-token` (default `~/.config/issue-pipeline/github-token`; one line, file 600), then a per-repository `<REPO>_GH_TOKEN` in the environment — repo name uppercased, `-`/`.` → `_` (e.g. `FIRE_GH_TOKEN` for `s-fleck/fire`) — then `GH_TOKEN` / `GITHUB_TOKEN`. It does not read `~/.Renviron`. Never commit or log it.
 - Vendored copies start byte-identical to this repo; project differences belong in the project's `AGENTS.md` and, once they touch a skill, in that copy's variant metadata.
 
 ## Vendoring
 
-Copy the whole skill directory — skills ship with `references/`, scripts, and helpers next to `SKILL.md`. Do not copy `SKILL.md` alone.
+Copy the whole skill directory — supporting files live in `references/`, `scripts/`, or `assets/` next to `SKILL.md`. Do not copy `SKILL.md` alone.
 
 Commands are single `.md` files: copy the file, not a directory. A command has no supporting-file mechanism; put reusable material in a skill and load it from the command.
 

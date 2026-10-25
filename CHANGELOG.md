@@ -19,6 +19,7 @@ name as the area prefix.
 
 ### Changed
 
+- **github-issue:** Move the REST helper to `scripts/github-rest.py` and update every invocation path; the skill root now follows the canonical layout (`SKILL.md` plus `references/`, `scripts/`, and `assets/`) (8.0.0)
 - **github-issue:** Define label resolution in `references/labels.md`: skill defaults, project AGENTS.md overrides, write/read deny rules, repository label descriptions, and ask-before-use for incomplete metadata; add read-only triage signals for the standard GitHub labels (`wontfix`/`invalid`/`duplicate`/`question`, `stale`, project blockers, ready gates, and classification hints); the style guide keeps the form contract (7.0.0)
 - **issue-to-spec:** Resolve label roles through the `github-issue` labels reference instead of hardcoding `product`/`idea`, `draft`, `needs-ruling`, and the priority tiers
 - **issue-to-spec:** Honor issue disposition and workflow metadata: skip or warn on declined labels, `not_planned` closures, assignees, parent/sub-issue trackers, open blockers, open/draft linked PRs, missing ready gates, milestone/board gates, and unchecked template gates
@@ -46,6 +47,7 @@ name as the area prefix.
 - **skill-update:** Add the parallel-landing procedure (per-session worktree, fetch/rebase/re-bump, changelog reconciliation, duplicate-lesson check), record the exact `upstream_commit` in variant metadata, and ship a skill metadata checker plus CI (4.0.0)
 - **skill-update:** Fix the checker script: skip Layout-table placeholders in the README Contents scan, fix the `git status --porcelain` path parsing, annotate the generic `CompletedProcess` type, and reformat to lint cleanly under a 100-char limit (4.0.2)
 - **skill-update:** Document OpenCode's actual skill and command layout and split the stable form rules into `references/style-guide.md`, keeping `SKILL.md` as the update and landing procedure; move the validator into `scripts/`; commands are single `.md` files, not skill directories (4.1.0)
+- **skill-update:** Enforce the canonical skill directory layout in the checker: lowercase kebab-case IDs, `skills/<name>/SKILL.md` only, no flat/grouped/nested skills, a skill root limited to `SKILL.md`, `references/`, `scripts/`, and `assets/`, and variant folder/name agreement (4.2.0)
 
 ### Removed
 

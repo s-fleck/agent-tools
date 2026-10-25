@@ -22,6 +22,9 @@ import tarfile
 import tempfile
 from pathlib import Path
 
+SKILL_ID_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+SKILL_SUBDIRS = ("references", "scripts", "assets")
+
 
 @dataclasses.dataclass
 class Frontmatter:
@@ -133,11 +136,60 @@ def git_is_ancestor(ancestor: str, descendant: str, cwd: Path) -> bool:
     return res.returncode == 0
 
 
-def get_skill_dirs(repo: Path) -> list[Path]:
+def validate_skill_layout(
+    skill_dir: Path, skill_name: str, require_id: bool = True
+) -> list[str]:
+    """Enforce the canonical skill directory layout from the style guide."""
+    errors: list[str] = []
+
+    if require_id:
+        if not SKILL_ID_RE.match(skill_name):
+            errors.append(
+                f"{skill_name}: skill ID is not lowercase kebab-case "
+                "(expected ^[a-z0-9]+(?:-[a-z0-9]+)*$)"
+            )
+        elif len(skill_name) > 64:
+            errors.append(f"{skill_name}: skill ID exceeds 64 characters")
+
+    for entry in sorted(skill_dir.iterdir(), key=lambda p: p.name):
+        if entry.name == "SKILL.md" and entry.is_file():
+            continue
+        if entry.is_dir() and entry.name in SKILL_SUBDIRS:
+            continue
+        errors.append(
+            f"{skill_name}: unexpected '{entry.name}' in the skill root; "
+            f"only SKILL.md and the {', '.join(SKILL_SUBDIRS)}/ directories "
+            "are allowed"
+        )
+
+    for nested in sorted(skill_dir.rglob("SKILL.md")):
+        if nested != skill_dir / "SKILL.md":
+            rel = nested.relative_to(skill_dir)
+            errors.append(f"{skill_name}: nested SKILL.md at '{rel}'")
+
+    return errors
+
+
+def collect_skill_dirs(repo: Path) -> tuple[list[Path], list[str]]:
+    """Return canonical skill dirs and layout errors from the skills/ root."""
+    errors: list[str] = []
     skills = repo / "skills"
     if not skills.exists():
-        return []
-    return [d for d in skills.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
+        return [], errors
+
+    skill_dirs: list[Path] = []
+    for entry in sorted(skills.iterdir(), key=lambda p: p.name):
+        if not entry.is_dir():
+            errors.append(
+                f"skills root: unexpected file '{entry.name}'; "
+                "canonical skills must be directories with SKILL.md"
+            )
+        elif not (entry / "SKILL.md").is_file():
+            errors.append(f"{entry.name}: skill directory is missing SKILL.md")
+        else:
+            skill_dirs.append(entry)
+
+    return skill_dirs, errors
 
 
 def _parse_version_from_text(text: str) -> str:
@@ -153,7 +205,8 @@ def validate_canonical_repo(repo: Path, strict: bool = False) -> list[str]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    skills = get_skill_dirs(repo)
+    skills, root_errors = collect_skill_dirs(repo)
+    errors.extend(root_errors)
     if not skills:
         errors.append("No skills found in repo")
         return errors
@@ -162,6 +215,7 @@ def validate_canonical_repo(repo: Path, strict: bool = False) -> list[str]:
     for skill_dir in skills:
         skill_name = skill_dir.name
         skill_md = skill_dir / "SKILL.md"
+        errors.extend(validate_skill_layout(skill_dir, skill_name))
         fm = parse_frontmatter(skill_md)
         raw = skill_md.read_text(encoding="utf-8")
 
@@ -324,10 +378,16 @@ def validate_variant(
 
     fm = parse_frontmatter(variant_dir / "SKILL.md")
     skill_name = variant_dir.name
+    errors.extend(validate_skill_layout(variant_dir, skill_name, require_id=False))
 
     if not fm.name:
         errors.append(f"{skill_name}: missing frontmatter name")
         return errors
+    if fm.name != skill_name:
+        errors.append(
+            f"{skill_name}: frontmatter name '{fm.name}' "
+            f"!= directory name '{skill_name}'"
+        )
 
     variant = fm.metadata.get("variant", "")
     if not variant:

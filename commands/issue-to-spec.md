@@ -35,7 +35,7 @@ Auto mode runs the same flow, then implements via the `openspec-apply-change` sk
 
 ## GitHub access
 
-Load the `github-issue` skill — it carries the REST helper (`github-rest.py`, called directly with `python3`, token rules included), the house style for issue bodies and comments, and the labels reference (`references/labels.md`), which resolves the label roles and read-only triage signals used below. If the target is a URL, its repository must match the project's; extract the issue number only after that check.
+Load the `github-issue` skill — it carries the REST helper (`scripts/github-rest.py`, called directly with `python3`, token rules included), the house style for issue bodies and comments, and the labels reference (`references/labels.md`), which resolves the label roles and read-only triage signals used below. If the target is a URL, its repository must match the project's; extract the issue number only after that check.
 
 ## Project conventions
 

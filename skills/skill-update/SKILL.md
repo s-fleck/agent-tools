@@ -9,7 +9,7 @@ description: >
   template and frontmatter. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "4.1.0"
+  version: "4.2.0"
 ---
 
 # Skill Update
@@ -26,7 +26,7 @@ The procedure below is the state machine: which copy you are changing, how to pr
 
 Non-negotiables:
 
-- Skills are directories (`skills/<name>/SKILL.md` canonically); commands are single files (`commands/<name>.md`).
+- Skills are directories (`skills/<name>/SKILL.md` canonically); commands are single files (`commands/<name>.md`). A skill root holds `SKILL.md` plus optional `references/`, `scripts/`, and `assets/` only.
 - Every changed skill bumps `metadata.version` and gets a `CHANGELOG.md` entry.
 - Canonical copies stay generic; project names, paths, tokens, and examples stay in the project copy.
 - A variant carries `variant`, `upstream`, `upstream_commit`, and `local_changes`; the exact contract is in the style guide.
@@ -260,8 +260,8 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/script
 5. The canonical copy is free of project-specific names, paths, tokens, examples, and skill names.
 6. A new, renamed, or forked skill has a README Contents row and vendoring command. For a rename, `rg '<old-name>'` finds no stale references.
 7. If the repo ships a doc check, run it. If the documented command is missing, fix the reference or skip; a broken doc-check reference is a repo bug, not a skill failure.
-8. The skill ID is unique across the repo and the directory name and frontmatter `name` agree.
-9. Run `python3 skills/skill-update/scripts/check_skill.py --repo .` — it validates frontmatter, versions, changelog coverage, duplicate entries, README cross-references, and duplicate skill/version pairs.
+8. The skill ID is unique across the repo, is lowercase kebab-case, and the directory name and frontmatter `name` agree. The skill root holds only `SKILL.md`, `references/`, `scripts/`, and `assets/`.
+9. Run `python3 skills/skill-update/scripts/check_skill.py --repo .` — it validates the skill layout and IDs, frontmatter, versions, changelog coverage, duplicate entries, README cross-references, and duplicate skill/version pairs.
 
 ### Project amendment
 
@@ -273,7 +273,7 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/script
 6. The edited copy is the project copy, not a global copy; no duplicate skill ID shadows it.
 7. If re-vendored, the base is updated, the suffix reset to `.1`, local amendments re-applied, `upstream` and `upstream_commit` current. If no amendments remain, the variant markers are gone.
 8. If the skill was renamed, the folder, frontmatter `name`, and project references agree.
-9. Run `python3 skills/skill-update/scripts/check_skill.py --variant <dir> --canonical <repo>` — it validates metadata contract, hash reachability, version consistency, and drift.
+9. Run `python3 skills/skill-update/scripts/check_skill.py --variant <dir> --canonical <repo>` — it validates the directory layout and folder/name agreement, metadata contract, hash reachability, version consistency, and drift.
 
 ### Command change
 
