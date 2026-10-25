@@ -17,8 +17,10 @@ name as the area prefix.
 
 ### Changed
 
+- **agent-tools:** Land canonical changes through a protected `master`: push a per-session branch, open a pull request, require the `Validate Skills` check, squash-merge, verify the post-merge run, and fast-forward the shared checkout instead of pushing to `master`
 - **github-issue:** Print the response JSON for successful writes instead of the resource URL or `ok`, so callers can confirm the created or updated resource without a follow-up GET. An empty write response prints `done` (9.0.0)
 - **issue-to-spec:** Capture postmortem seeds during a run; finalization stays at the archive boundary, never in this command
+- **skill-update:** Replace direct pushes to `master` with the pull request landing procedure: push the branch, wait for the required check, squash-merge, verify the post-merge run, fast-forward the shared checkout, and add branch-protection red flags (6.0.0)
 
 ### Fixed
 

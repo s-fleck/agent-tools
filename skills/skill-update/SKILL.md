@@ -9,7 +9,7 @@ description: >
   template and frontmatter. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "5.0.1"
+  version: "6.0.0"
 ---
 
 # Skill Update
@@ -50,9 +50,9 @@ Initial vendoring is a straight copy: the whole directory for a skill, the singl
 - Renaming or forking a skill.
 - Bumping a skill's version and recording it in the changelog.
 - Landing a canonical change while other writers are active (parallel updates).
-- A push was rejected and you need to rebase and re-validate.
-- A `Skill Validation` run for a landed change is red and you need to fix
-  forward.
+- A branch push was rejected and you need to rebase and re-validate.
+- A `Skill Validation` run for a pull request or a landed change is red and
+  you need to fix forward.
 
 ## The Two Copies
 
@@ -103,10 +103,12 @@ If more than one source contains the ID, stop and resolve the duplicate before e
 
 ## Parallel Updates — Landing Procedure
 
-The canonical repo runs `Skill Validation` on every push and pull request and
-accepts direct pushes to `master`. A push is not landed until the run for the
-pushed SHA is green. Multiple writers may edit skills concurrently. To land a
-change without conflicts or lost updates:
+The canonical repo runs `Skill Validation` on every pull request and on every
+push to `master`. `master` is protected: changes land through a pull request
+whose required check is green, then a squash merge. A local pass is not a CI
+pass, and a green pull request check is not a landing until the post-merge run
+for the merge commit is green. Multiple writers may edit skills concurrently.
+To land a change without conflicts or lost updates:
 
 1. **Fetch and isolate.** `git -C ~/workspace/agent-tools fetch origin`. Create a per-session worktree from `origin/master` — never edit the shared checkout directly:
    ```bash
@@ -126,7 +128,7 @@ change without conflicts or lost updates:
    git -C "$WT" commit -m "<skill>: <imperative summary> (<version>)"
    ```
 
-4. **Rebase and re-validate.** Before pushing, fetch again, rebase onto the latest `origin/master`, then recompute the version and changelog entry against the new base:
+4. **Rebase and re-validate.** Before pushing the branch, fetch again, rebase onto the latest `origin/master`, then recompute the version and changelog entry against the new base:
    ```bash
    git -C "$WT" fetch origin
    git -C "$WT" rebase origin/master
@@ -140,26 +142,39 @@ change without conflicts or lost updates:
 
 5. **Changelog reconciliation.** After rebase, re-read the **entire** `[Unreleased]` section. Insert or rewrite your entry in sorted position (area name alphabetically). Never drop or rewrite another writer's distinct entry. If the conflict is ambiguous, stop and ask rather than guessing.
 
-6. **Push with retry.** Push the branch to `master`:
+6. **Push the branch and open a pull request.** Push your own branch, never `master`:
    ```bash
-   git -C "$WT" push origin HEAD:master
+   git -C "$WT" push -u origin HEAD
+   ```
+   Open a pull request against `master` with the commit subject as its title and the change summary as its body. Record the pull request URL and head:
+   ```bash
+   SHA=$(git -C "$WT" rev-parse HEAD)
    ```
    - On rejection (non-fast-forward), repeat from step 4 (fetch, rebase, re-check, push).
-   - Bound retries at three attempts with a short randomized wait (`sleep $((RANDOM % 5 + 1))`), then stop and leave the branch for a human.
-   - Never force-push. Never merge `origin/master` into the branch; rebase keeps history linear.
-   - Record the pushed object name: `SHA=$(git -C "$WT" rev-parse HEAD)`.
+   - After a rebase of an already pushed branch, update your own pull request branch with `git -C "$WT" push --force-with-lease origin HEAD`. Never use a merge commit to catch up; rebase keeps history linear.
+   - Bound retries at three attempts with a short randomized wait (`sleep $((RANDOM % 5 + 1))`), then stop and leave the branch and pull request for a human.
+   - Never push to `master` and never force-push any other branch.
 
-7. **Verify CI.** Wait for the `Skill Validation` run for `$SHA` to finish.
-   - Green: continue to cleanup.
+7. **Verify pull request CI, then merge.** Wait for the `Skill Validation` run for `$SHA` to finish.
+   - If `master` moved and the branch is behind, repeat step 4 (fetch, rebase, re-check) and update the branch with `git -C "$WT" push --force-with-lease origin HEAD`.
+   - Green: squash-merge the pull request (`gh pr merge --squash` or the REST merge endpoint with `merge_method: squash`). Do not merge while the check is pending or red, and do not create a merge commit.
    - Red: read the failing step's log, fix the cause in a new commit, run `scripts/check.sh origin/master` again, and push again.
-   - Bound the CI-fix loop at three attempts. If it is still red, leave the worktree and report the run URL and failed step.
-   - Do not report the change as landed while the run is pending or red.
+   - Bound the CI-fix loop at three attempts. If it is still red, leave the worktree and pull request in place and report the pull request URL, run URL, and failed step.
+   - Do not report the change as landed while the pull request check is pending or red.
 
-8. **Cleanup.** Only after the commit is on `origin/master` **and** the run for `$SHA` is green, remove the worktree:
+8. **Verify post-merge CI and clean up.** After the merge, fetch and record the merge commit:
    ```bash
-   git -C ~/workspace/agent-tools worktree remove "$WT"
+   git -C ~/workspace/agent-tools fetch origin
+   MERGE_SHA=$(git -C ~/workspace/agent-tools rev-parse origin/master)
    ```
-   If the push failed or CI is red, leave the worktree and report its path and the run URL.
+   Wait for the `push` run for `$MERGE_SHA` to finish. Green: fast-forward the shared checkout, delete the branch, and remove the worktree:
+   ```bash
+   git -C ~/workspace/agent-tools merge --ff-only origin/master
+   git -C "$WT" push origin --delete skill-update/<skill>-<stamp>
+   git -C ~/workspace/agent-tools worktree remove "$WT"
+   git -C ~/workspace/agent-tools branch -D skill-update/<skill>-<stamp>
+   ```
+   GitHub may have deleted the head branch on merge; the remote delete then fails harmlessly. Red: stop the line and fix forward in a new pull request; leave the worktree until the failure is understood. If the pull request was not merged or either run is red, leave the worktree and report its path and the run URLs.
 
 **Version allocation is at landing, not edit time.** An unpublished version never reached `origin/master` and may be discarded during rebase. A pushed version is never reused.
 
@@ -298,13 +313,17 @@ A `check_skill.py` script ships with this skill (see `skills/skill-update/script
 
 ### Landing validation
 
-Before pushing a canonical change:
+Before opening or updating a pull request:
 
 - Run `scripts/check.sh origin/master` — it runs the canonical check and the bump check for every changed skill. The underlying command is `python3 skills/skill-update/scripts/check_skill.py --check-bump <skill> --base origin/master`; it verifies a strict version increase over the base or `1.0.0` for a new skill, a matching changelog entry, and a clean tree.
 
-After pushing:
+After opening the pull request:
 
-- Wait for the `Skill Validation` run for the pushed SHA. Report the run URL only when it is green; a pending or red run means the change is not landed.
+- Wait for the `Skill Validation` run for the pull request head. Do not merge while it is pending or red.
+
+After the merge:
+
+- Wait for the `Skill Validation` run for the merge commit on `master`. Report the merge commit SHA, the pull request URL, and the run URL only when both are green; a pending or red post-merge run means the change is not landed.
 
 ## Red Flags — Stop And Reconsider
 
@@ -322,10 +341,13 @@ After pushing:
 - You added, renamed, or forked a skill without updating the README and cross-references.
 - You removed the original author or `license`.
 - You edited the shared checkout `~/workspace/agent-tools` directly instead of using a per-session worktree.
+- You pushed to `master`, or pushed from the shared checkout, instead of pushing a feature branch and opening a pull request.
 - You used `git add -A` or `git commit -a` instead of staging explicit paths.
-- You force-pushed or merged `origin/master` into your branch instead of rebasing.
-- You reported a change as landed before the `Skill Validation` run for the pushed SHA was green.
-- You removed the worktree while the run for the pushed SHA was pending or red.
+- You merged `origin/master` into your branch instead of rebasing, or force-pushed a branch you do not own.
+- You merged a pull request while the required `Validate Skills` check was pending or red.
+- You merged with a merge commit instead of a squash merge.
+- You reported a change as landed before the post-merge `Skill Validation` run for the merge commit was green.
+- You removed the worktree while the pull request or the post-merge run was pending or red.
 - You weakened or skipped a CI check to make a red run green.
 - You force-pushed `master` to recover from a CI failure.
 - You kept a pre-rebase version number or changelog entry after the base moved.
