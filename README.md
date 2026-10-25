@@ -4,7 +4,7 @@
 
 Canonical copies of opencode tooling (skills, commands, subagents, checks) that projects **copy from** when needed. It is deliberately not a live tool directory:
 
-- Do **not** add this repo to `skills.paths`, `~/.agents/skills/`, or any other auto-discovery location — agents should only see the tools a project actually vendored.
+- Do **not** add this repo to the `skills` config array, `~/.agents/skills/`, or any other auto-discovery location — agents should only see the tools a project actually vendored.
 - Selection is per project; not everything fits everywhere. Example: R package repos take `r-news-styleguide` + `semver`, other projects take `changelog-style-guide` + `semver`.
 - Vendored copies start byte-identical to this repo. A copy that later takes project-specific amendments is marked as a **variant** in its metadata — see [Skill versioning](#skill-versioning).
 
@@ -93,19 +93,19 @@ cp -r skills/r-package-style-guide skills/r-package-style-guide-rlang "$P/.openc
 `changelog-style-guide` delegate the version bump to `semver` — copy it
 alongside either one.
 
-**Then restart opencode.** Skills, agents, and commands are read at startup; a running session keeps the set it started with. After the restart, verify what was picked up:
+**Then restart opencode if you changed skills or agents.** Skills and agents are read at startup; a running session keeps the set it started with. Command files reload automatically. After the restart, verify what was picked up:
 
 ```bash
 cd "$P" && opencode debug skill   # lists every skill opencode found, with its path
 ```
 
-**Watch for name collisions.** opencode registers skills by name, and the same
-name in two places is a race: the loader reads all candidates concurrently and
-the last one to finish wins, so a stale global copy (`~/.claude/skills/`,
-`~/.agents/skills/`) can shadow the vendored one — non-deterministically.
-Prefer `.opencode/skills/`, which opencode scans last, and drop stale global
-copies of the same skill. `opencode debug skill` shows which path won. To run
-without the global set entirely: `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`.
+**Watch for name collisions.** opencode registers skills by ID, and later
+sources replace earlier ones. A duplicate in a global source or another project
+directory can still be the copy you edit by mistake. Prefer `.opencode/skills/`
+for vendored copies; it outranks the global and compatibility sources. Explicit
+`skills` config entries rank above it, so do not duplicate an ID there.
+`opencode debug skill` shows which path won. To run without the global set
+entirely: `OPENCODE_DISABLE_EXTERNAL_SKILLS=1`.
 
 A copy stays byte-identical until the project amends it. The first amendment
 turns it into a variant: bump the version suffix, set `variant`, `upstream`,
