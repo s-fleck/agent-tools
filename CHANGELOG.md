@@ -14,6 +14,26 @@ name as the area prefix.
 ### Added
 
 - **postmortem:** Add a landmark-triggered postmortem lifecycle: detect triggers, seed the change while context exists, consolidate at archive before the archiving commit, and keep evidence-based registry entries (1.0.0)
+- **land:** Add `/land` command — land staged work through a pull request (branch, commit, push, PR, squash merge, sync); generic, project-configurable checks via AGENTS.md
+- **release:** Add `/release` command — cut a full release (analyze changelog, semver bump, update version files, land via PR, tag, publish)
+
+### Changed
+
+- **land:** Add version-bump guardrail: staged changes must include a version/changelog file (CHANGELOG.md, Cargo.toml, package.json, etc.) or the landing asks before continuing; disable via AGENTS.md
+- **skill-update:** Replace worktree-based parallel landing with `/land` + `/release` commands; drop per-session worktree, rebase loop, post-merge CI wait; branch protection + required check is the gate; allow `commands/` changes during skill validation (7.0.0)
+
+## [0.4.0] - 2026-10-28
+
+### Added
+
+- **postmortem:** Add a landmark-triggered postmortem lifecycle: detect triggers, seed the change while context exists, consolidate at archive before the archiving commit, and keep evidence-based registry entries (1.0.0)
+- **land:** Add `/land` command — land staged work through a pull request (branch, commit, push, PR, squash merge, sync); generic, project-configurable checks via AGENTS.md
+- **release:** Add `/release` command — cut a full release (analyze changelog, semver bump, update version files, land via PR, tag, publish)
+
+### Changed
+
+- **land:** Add version-bump guardrail: staged changes must include a version/changelog file (CHANGELOG.md, Cargo.toml, package.json, etc.) or the landing asks before continuing; disable via AGENTS.md
+- **skill-update:** Replace worktree-based parallel landing with `/land` + `/release` commands; drop per-session worktree, rebase loop, post-merge CI wait; branch protection + required check is the gate; allow `commands/` changes during skill validation (7.0.0)
 
 ### Changed
 

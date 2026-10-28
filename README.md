@@ -1,6 +1,6 @@
 # agent-tools — archival source of agent tooling
 
-**Version:** 0.3.0 — see [CHANGELOG.md](CHANGELOG.md) for the release history. Releases are tagged `v<version>`.
+**Version:** 0.4.0 — see [CHANGELOG.md](CHANGELOG.md) for the release history. Releases are tagged `v<version>`.
 
 Canonical copies of opencode tooling (skills, commands, subagents, checks) that projects **copy from** when needed. It is deliberately not a live tool directory:
 
@@ -34,6 +34,8 @@ Canonical copies of opencode tooling (skills, commands, subagents, checks) that 
 | `skills/doc-rewrite` | scoped review/rewrite procedure for one named document | the project has binding docs |
 | `skills/skill-update` | OpenCode skill/command style guide, layout and discovery; amending, versioning, renaming, syncing back skills; pulling upstream into a variant; parallel-safe canonical landings; the metadata contract for variants | the project amends its own copies or ships slash commands |
 | `commands/issue-to-spec` | GitHub issue → reviewed OpenSpec change with label/ownership triage; `/issue-to-spec auto [<issue>]` picks or takes an issue and implements it | the project uses OpenSpec — needs the CLI and its `openspec-*` skills |
+| `commands/land` | Land staged work through a pull request — branch, commit, push, PR, squash merge, sync | any project using GitHub |
+| `commands/release` | Cut a release — bump version, update changelog, land via PR, tag, and publish | any project that releases |
 | `agents/spec-reviewer` | read-only OpenSpec change reviewer | ditto |
 
 ## Skill versioning
@@ -92,6 +94,8 @@ cp -r skills/semver "$P/.opencode/skills/"                # with either changelo
 cp -r skills/skill-update "$P/.opencode/skills/"          # whenever the project amends its copies
 cp agents/spec-reviewer.md "$P/.opencode/agent/"
 cp commands/issue-to-spec.md "$P/.opencode/commands/"
+cp commands/land.md "$P/.opencode/commands/"
+cp commands/release.md "$P/.opencode/commands/"
 ```
 
 **Overlays ship with their base.** `r-package-style-guide-rlang` only means something next to `r-package-style-guide` — copy both, and only when the package depends on rlang:
