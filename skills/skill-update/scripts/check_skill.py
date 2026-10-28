@@ -554,6 +554,7 @@ def _check_unrelated_files(skill_name: str, repo: Path) -> list[str]:
             allowed = (
                 path.startswith(f"skills/{skill_name}/")
                 or path.startswith("scripts/")
+                or path.startswith("commands/")
                 or path in {
                     "CHANGELOG.md",
                     "README.md",

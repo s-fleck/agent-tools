@@ -9,7 +9,7 @@ description: >
   template and frontmatter. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "6.0.0"
+  version: "7.0.0"
 ---
 
 # Skill Update
@@ -105,78 +105,50 @@ If more than one source contains the ID, stop and resolve the duplicate before e
 
 The canonical repo runs `Skill Validation` on every pull request and on every
 push to `master`. `master` is protected: changes land through a pull request
-whose required check is green, then a squash merge. A local pass is not a CI
-pass, and a green pull request check is not a landing until the post-merge run
-for the merge commit is green. Multiple writers may edit skills concurrently.
-To land a change without conflicts or lost updates:
+whose required check is green, then a squash merge. The `Validate Skills`
+required status check on the PR is the gate.
 
-1. **Fetch and isolate.** `git -C ~/workspace/agent-tools fetch origin`. Create a per-session worktree from `origin/master` — never edit the shared checkout directly:
-   ```bash
-   WT=$(mktemp -d /tmp/opencode/agent-tools-<skill>.XXXXXX)
-   git -C ~/workspace/agent-tools worktree add \
-     -b skill-update/<skill>-<stamp> "$WT" origin/master
-   ```
-   All edits, staging, and commits happen in `$WT`. The shared checkout `~/workspace/agent-tools` is a read-only fetch anchor.
+To land a canonical change:
 
-2. **Stage explicitly.** Never `git add -A` or `git commit -a`. Stage only the files you changed:
+1. **Stage explicitly.** Never `git add -A` or `git commit -a`. Stage only the
+   files you changed:
    ```bash
-   git -C "$WT" add skills/<name>/SKILL.md CHANGELOG.md README.md
+   git add skills/<name>/SKILL.md CHANGELOG.md README.md
    ```
 
-3. **Commit with the tentative version.** After editing, run `scripts/check.sh origin/master` to verify the canonical checks, the tentative version bump, and the changelog entry. Commit:
+2. **Run local gate.** `scripts/check.sh origin/master` — validates canonical
+   layout, frontmatter, version bump, and changelog entry.
+
+3. **Run `/land`.** It creates a branch, commits, pushes, opens a PR against
+   `master`, squash-merges via GitHub API, and syncs local `master`. The PR
+   must pass the `Validate Skills` required check before merge (branch
+   protection enforces this).
+
+4. **Verify.** After merge, fast-forward the shared checkout:
    ```bash
-   git -C "$WT" commit -m "<skill>: <imperative summary> (<version>)"
+   git fetch origin && git merge --ff-only origin/master
    ```
 
-4. **Rebase and re-validate.** Before pushing the branch, fetch again, rebase onto the latest `origin/master`, then recompute the version and changelog entry against the new base:
-   ```bash
-   git -C "$WT" fetch origin
-   git -C "$WT" rebase origin/master
-   ```
-   - If the rebase applies cleanly, read the skill's version from `origin/master:skills/<name>/SKILL.md`. Your version must be a **strict semver increase** over that base and must match the residual diff after rebase.
-   - If the base changed, re-bump from the new base (reset lower components), update the changelog entry, and amend the commit (`git commit --amend`).
-   - If the other writer's change is the same lesson, your residual diff may be zero: drop the commit (`git reset HEAD~1`).
-   - If it is a refinement, reclassify and bump from their version.
-   - Search `origin/master` for the generic lesson again (see **Syncing Back to Canonical**, step 2). If they already landed it, sync nothing.
-   - Run `scripts/check.sh origin/master` again after the rebase. It must pass before you push.
+**Failure paths:**
 
-5. **Changelog reconciliation.** After rebase, re-read the **entire** `[Unreleased]` section. Insert or rewrite your entry in sorted position (area name alphabetically). Never drop or rewrite another writer's distinct entry. If the conflict is ambiguous, stop and ask rather than guessing.
+- Local gate fails → fix before running `/land`.
+- PR checks fail → fix in a new commit on the same branch, re-run local gate,
+  push again (force-with-lease). The PR updates automatically.
+- Merge refused (permission) → `/land` leaves PR open; merge manually in browser.
 
-6. **Push the branch and open a pull request.** Push your own branch, never `master`:
-   ```bash
-   git -C "$WT" push -u origin HEAD
-   ```
-   Open a pull request against `master` with the commit subject as its title and the change summary as its body. Record the pull request URL and head:
-   ```bash
-   SHA=$(git -C "$WT" rev-parse HEAD)
-   ```
-   - On rejection (non-fast-forward), repeat from step 4 (fetch, rebase, re-check, push).
-   - After a rebase of an already pushed branch, update your own pull request branch with `git -C "$WT" push --force-with-lease origin HEAD`. Never use a merge commit to catch up; rebase keeps history linear.
-   - Bound retries at three attempts with a short randomized wait (`sleep $((RANDOM % 5 + 1))`), then stop and leave the branch and pull request for a human.
-   - Never push to `master` and never force-push any other branch.
+**Version allocation is at landing, not edit time.** An unpublished version
+never reached `origin/master` and may be discarded. A pushed version is never
+reused.
 
-7. **Verify pull request CI, then merge.** Wait for the `Skill Validation` run for `$SHA` to finish.
-   - If `master` moved and the branch is behind, repeat step 4 (fetch, rebase, re-check) and update the branch with `git -C "$WT" push --force-with-lease origin HEAD`.
-   - Green: squash-merge the pull request (`gh pr merge --squash` or the REST merge endpoint with `merge_method: squash`). Do not merge while the check is pending or red, and do not create a merge commit.
-   - Red: read the failing step's log, fix the cause in a new commit, run `scripts/check.sh origin/master` again, and push again.
-   - Bound the CI-fix loop at three attempts. If it is still red, leave the worktree and pull request in place and report the pull request URL, run URL, and failed step.
-   - Do not report the change as landed while the pull request check is pending or red.
+## Release Procedure
 
-8. **Verify post-merge CI and clean up.** After the merge, fetch and record the merge commit:
-   ```bash
-   git -C ~/workspace/agent-tools fetch origin
-   MERGE_SHA=$(git -C ~/workspace/agent-tools rev-parse origin/master)
-   ```
-   Wait for the `push` run for `$MERGE_SHA` to finish. Green: fast-forward the shared checkout, delete the branch, and remove the worktree:
-   ```bash
-   git -C ~/workspace/agent-tools merge --ff-only origin/master
-   git -C "$WT" push origin --delete skill-update/<skill>-<stamp>
-   git -C ~/workspace/agent-tools worktree remove "$WT"
-   git -C ~/workspace/agent-tools branch -D skill-update/<skill>-<stamp>
-   ```
-   GitHub may have deleted the head branch on merge; the remote delete then fails harmlessly. Red: stop the line and fix forward in a new pull request; leave the worktree until the failure is understood. If the pull request was not merged or either run is red, leave the worktree and report its path and the run URLs.
+Use `/release` to cut a release. It reads `[Unreleased]` from `CHANGELOG.md`,
+invokes the `semver` skill to determine the next version, promotes the
+changelog, updates version files (per `release.version_files` in `AGENTS.md`),
+runs `/land`, tags the merge commit, and pushes the tag. No publish step for
+this repo — tag push = release.
 
-**Version allocation is at landing, not edit time.** An unpublished version never reached `origin/master` and may be discarded during rebase. A pushed version is never reused.
+See `AGENTS.md` for the full procedure and project config.
 
 ## The Canonical Repo
 
@@ -193,9 +165,10 @@ git clone https://github.com/s-fleck/agent-tools ~/workspace/agent-tools
 
 If it is missing and cannot be cloned, stop and ask — do not substitute another checkout or a stale copy of the repo.
 
-**The shared checkout is a fetch anchor, not an edit surface.** When working on a canonical change, create a per-session worktree from `origin/master` (see **Parallel Updates — Landing Procedure**). When working in a project, edit the project copy and sync the generic lesson back separately.
-
-The current canonical state is always `origin/master` after `git fetch`. Do not read skill files from the shared working tree while another session may be mid-edit. Use `git show origin/master:skills/<name>/SKILL.md` or a detached worktree for snapshots.
+**The shared checkout is a fetch anchor.** After a merge, update it with:
+```bash
+git fetch origin && git merge --ff-only origin/master
+```
 
 ## Amending a Project Copy
 
@@ -273,7 +246,7 @@ The current canonical state is always `origin/master` after `git fetch`. Do not 
 4. Changelog entry under `[Unreleased]` `### Added`, per the `changelog-style-guide` skill.
 5. If the skill is adapted from another skill, keep the original author and `license` and say so in the changelog entry; if it is a fork with a new name, follow [Renaming and Forking](#renaming-and-forking).
 6. Exercise every command and path in the skill once before shipping.
-7. Land the change using the [Parallel Updates — Landing Procedure](#parallel-updates--landing-procedure).
+7. Land the change: stage files, run `scripts/check.sh origin/master`, then run `/land`.
 
 ## Validation
 
@@ -319,11 +292,11 @@ Before opening or updating a pull request:
 
 After opening the pull request:
 
-- Wait for the `Skill Validation` run for the pull request head. Do not merge while it is pending or red.
+- Wait for the `Skill Validation` run for the pull request head. Do not merge while it is pending or red. The required status check on the PR is the gate.
 
 After the merge:
 
-- Wait for the `Skill Validation` run for the merge commit on `master`. Report the merge commit SHA, the pull request URL, and the run URL only when both are green; a pending or red post-merge run means the change is not landed.
+- Fast-forward the shared checkout: `git fetch origin && git merge --ff-only origin/master`. The change is landed when the PR is merged and the shared checkout is updated.
 
 ## Red Flags — Stop And Reconsider
 
@@ -340,21 +313,15 @@ After the merge:
 - A version number was reused, or a skill's directory name and frontmatter `name` disagree.
 - You added, renamed, or forked a skill without updating the README and cross-references.
 - You removed the original author or `license`.
-- You edited the shared checkout `~/workspace/agent-tools` directly instead of using a per-session worktree.
 - You pushed to `master`, or pushed from the shared checkout, instead of pushing a feature branch and opening a pull request.
 - You used `git add -A` or `git commit -a` instead of staging explicit paths.
-- You merged `origin/master` into your branch instead of rebasing, or force-pushed a branch you do not own.
 - You merged a pull request while the required `Validate Skills` check was pending or red.
 - You merged with a merge commit instead of a squash merge.
-- You reported a change as landed before the post-merge `Skill Validation` run for the merge commit was green.
-- You removed the worktree while the pull request or the post-merge run was pending or red.
 - You weakened or skipped a CI check to make a red run green.
 - You force-pushed `master` to recover from a CI failure.
-- You kept a pre-rebase version number or changelog entry after the base moved.
 - You resolved a changelog conflict by dropping another writer's distinct entry.
 - You recorded a local (unpushed) canonical commit in `upstream_commit`.
 - You omitted `upstream_commit` on a new variant or re-vendor.
-- You used the fixed path `/tmp/opencode/skill-base-<name>` instead of `mktemp` for the base worktree.
 - You created a command as a directory, or expected it to support `references/` or scripts.
 - You put `template:` in Markdown command frontmatter, or placed untrusted arguments in a `!` block.
 - You added skill variant markers to a command.
