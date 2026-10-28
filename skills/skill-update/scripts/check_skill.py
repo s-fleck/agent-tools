@@ -560,6 +560,7 @@ def _check_unrelated_files(skill_name: str, repo: Path) -> list[str]:
                     "README.md",
                     "AGENTS.md",
                     ".github/workflows/skills.yml",
+                    ".gitignore",
                 }
             )
             if not allowed:
