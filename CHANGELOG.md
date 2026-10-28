@@ -21,6 +21,7 @@ name as the area prefix.
 
 - **land:** Add version-bump guardrail: staged changes must include a version/changelog file (CHANGELOG.md, Cargo.toml, package.json, etc.) or the landing asks before continuing; disable via AGENTS.md
 - **skill-update:** Replace worktree-based parallel landing with `/land` + `/release` commands; drop per-session worktree, rebase loop, post-merge CI wait; branch protection + required check is the gate; allow `commands/` changes during skill validation (7.0.0)
+- **skill-update:** Allow `.gitignore` in validation unrelated files check (7.0.1)
 
 ## [0.4.0] - 2026-10-28
 
