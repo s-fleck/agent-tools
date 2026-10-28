@@ -9,7 +9,7 @@ description: >
   template and frontmatter. Also covers parallel-safe canonical landings.
 metadata:
   author: Stefan Fleck
-  version: "7.0.0"
+  version: "7.0.1"
 ---
 
 # Skill Update
