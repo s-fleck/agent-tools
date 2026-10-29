@@ -11,6 +11,8 @@ name as the area prefix.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-10-29
+
 ### Added
 
 - **postmortem:** Add a landmark-triggered postmortem lifecycle: detect triggers, seed the change while context exists, consolidate at archive before the archiving commit, and keep evidence-based registry entries (1.0.0)
