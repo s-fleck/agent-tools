@@ -1,15 +1,16 @@
 ---
 name: postmortem
 description: >
-  Use when a change triggers a postmortem — a binding-doc, contract, schema,
-  or dependency-baseline change; an escaped defect, revert, or incident;
+  Use when a change triggers a postmortem — a changed binding fact (purpose,
+  non-goal, priority, invariant, or a glossary term or meaning), contract,
+  schema, or dependency baseline; an escaped defect, revert, or incident;
   repeated friction; a reversed scope decision; or a novel landing failure —
   and when finalizing a change at archive. Covers trigger detection, durable
   seed capture, registry consolidation, follow-up filing, and the evidence
   rules for POSTMORTEMS.md entries.
 metadata:
   author: Stefan Fleck
-  version: "1.0.0"
+  version: "2.0.0"
 ---
 
 # Postmortem
@@ -97,8 +98,9 @@ is the durable record.
 - **Follow-ups** — actual issue numbers, or "none".
 
 Omit empty sections. Link evidence. Never blame people, include personal data,
-tokens, or secrets. A rule change goes into the binding docs; the postmortem
-records why the rule was hard to get right, then cites the doc.
+tokens, or secrets. A rule change goes to its owner (a binding doc, a spec, or
+the agent instructions); the postmortem records why the rule was hard to get
+right, then cites the owner.
 
 ## When to skip
 
@@ -115,6 +117,7 @@ records why the rule was hard to get right, then cites the doc.
 - Writing the registry after merge.
 - A per-issue entry for every issue.
 - An entry without links to the issue, PR, commit, or archived change.
-- A "learning" that is actually a decision that belongs in a binding doc.
+- A "learning" that is actually a rule that belongs in a binding doc, a spec,
+  or the agent instructions.
 - Follow-ups described but not filed.
 - Blame, personal data, tokens, or secrets.

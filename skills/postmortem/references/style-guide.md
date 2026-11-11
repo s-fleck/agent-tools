@@ -7,12 +7,11 @@ seed format, and the registry entry.
 ## Registry contract
 
 - **One path per project**, named in the project's `AGENTS.md`. Default:
-  `POSTMORTEMS.md` at the repository root. A project that keeps it under
-  `docs/` must list it in the docs map as a non-binding record and exempt it
-  from `Status:` bumps and binding-docs sync.
-- **Non-binding.** It carries no `Status:` line and is not part of the binding
-  docs. A rule change goes through the binding docs; the registry records why
-  the work was hard, not what the rule is.
+  `POSTMORTEMS.md` at the repository root. A project that keeps it elsewhere
+  says in its header that it is a non-binding record.
+- **Non-binding.** It is not part of the binding docs. A rule change goes to
+  its owner (a binding doc, a spec, or the agent instructions); the registry
+  records why the work was hard, not what the rule is.
 - **Append-only, newest first.** Add new entries below the file header. Never
   rewrite a historical entry; to correct one, add a new entry that supersedes it
   and links back.
@@ -26,7 +25,7 @@ Write an entry when at least one row applies.
 
 | Trigger | Entry when | Examples |
 |---|---|---|
-| Policy or contract change | A binding doc, schema, public contract, or dependency baseline changed | a renamed config key, a new required stage, a toolchain migration |
+| Policy or contract change | A binding fact (purpose, non-goal, priority, invariant, or a glossary term or meaning), schema, public contract, or dependency baseline changed | a renamed config key, a new required stage, a toolchain migration |
 | Escaped defect or incident | Something reached the base branch, or a revert/hotfix was needed | a merged bug, a security or data issue, a rollback |
 | Repeated friction | The same finding, check failure, or agent mistake happened at least twice | two review rounds on one paragraph, the same test failure after two fixes |
 | Reversed decision | A recorded decision was undone after being treated as settled | a reversal in the issue's rulings, a spec rewritten after approval |
@@ -96,8 +95,9 @@ Rules:
 - **Describe systems and decisions, not people.** No blame and no personal
   data. A human decision is cited by its record, not by the person.
 - **Do not restate the issue, spec, or changelog.** Link them.
-- **Do not put binding decisions here.** If the work changed a rule, update the
-  binding docs and cite them; the entry records why it was difficult.
+- **Do not put rules here.** If the work changed a rule, update its owner (a
+  binding doc, a spec, or the agent instructions) and cite it; the entry
+  records why it was difficult.
 - **No TODOs.** File follow-ups before the entry lands, or write "None."
 - **Unknown is allowed.** If the evidence does not settle a point, say so.
   Invented detail is worse than a gap.
@@ -135,6 +135,6 @@ Before the entry is committed:
 2. Is every claim linked to durable evidence?
 3. Are follow-ups filed as issues, or explicitly "None"?
 4. Is it at most 250 words with empty sections removed?
-5. Did any rule change go into the binding docs instead?
+5. Did any rule change go to its owner instead?
 6. Does it avoid blame, personal data, tokens, and secrets?
 7. Is it appended newest-first, with no historical entry rewritten?

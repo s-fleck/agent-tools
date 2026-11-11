@@ -11,6 +11,14 @@ name as the area prefix.
 
 ## [Unreleased]
 
+### Added
+
+- **binding-docs:** Add a skill for root `VISION.md`, `ARCHITECTURE.md` (matklad convention plus priorities and invariants) and `GLOSSARY.yaml` (DDD-inspired ubiquitous language) in OpenSpec projects, with templates; binding facts change only through an OpenSpec change (1.0.0)
+
+### Changed
+
+- **postmortem:** Trigger on a changed binding fact instead of any binding-doc edit, route rule changes to their owner, and drop the `Status:` exemption and docs-map listing for the registry (2.0.0)
+
 ## [0.4.0] - 2026-10-29
 
 ### Added

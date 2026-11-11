@@ -1,0 +1,30 @@
+# Ubiquitous language for <product>.
+# Code, specs, docs and conversation use these terms with exactly this meaning.
+# Binding. Renaming or retiring a term, or changing its meaning, needs an
+# approved OpenSpec change. Adding a term, adding to avoid or see, and rewording
+# a meaning without changing it are free. Work that would use a term against
+# its meaning stops and is raised with the user.
+
+terms:
+  - term: Billing account
+    meaning: The party that receives invoices and owns payment methods.
+    avoid: [account]
+    see: [User account]
+
+  - term: Portfolio
+    meaning: A set of positions managed against one target allocation.
+    avoid: [depot, fund]
+    see: [Rebalance]
+
+  - term: Rebalance
+    meaning: To trade a portfolio back to its target allocation.
+    avoid: [reweight]
+
+  - term: User account
+    meaning: A login with credentials and roles.
+    avoid: [account]
+    see: [Billing account]
+
+retired:
+  - term: Basket
+    replacement: Portfolio
