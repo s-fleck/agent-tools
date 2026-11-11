@@ -122,6 +122,11 @@ def _parse_args(argv: Sequence[str] | None) -> argparse.Namespace:
         action='store_true',
         help='follow Link rel=next on a GET list endpoint and print one JSON array',
     )
+    parser.add_argument(
+        '--compact',
+        action='store_true',
+        help='print JSON on one line without indentation (smaller for long responses)',
+    )
     parser.add_argument('method', choices=METHODS, help='HTTP method')
     parser.add_argument('path', help='API path starting with /, for example /issues/42')
     parser.add_argument(
@@ -326,13 +331,14 @@ def _decode_json(body: bytes) -> object | None:
         raise HelperError(f'invalid JSON response: {err.msg}') from err
 
 
-def _print_result(method: str, body: bytes) -> None:
+def _print_result(method: str, body: bytes, compact: bool = False) -> None:
     """Print the JSON response body; `done` when a write returns no body.
 
     Writes print the created or updated resource, so the caller can confirm
     the result without a follow-up GET. A write has already landed by the time
     its response is printed, so an empty or unparseable body prints `done`
     instead of failing the call. A GET keeps the strict JSON contract.
+    `compact` prints the JSON on one line instead of indented.
     """
     if method == 'DELETE':
         print('done')
@@ -344,7 +350,10 @@ def _print_result(method: str, body: bytes) -> None:
             raise
         data = None
     if data is not None:
-        print(json.dumps(data, indent=2))
+        if compact:
+            print(json.dumps(data, separators=(',', ':')))
+        else:
+            print(json.dumps(data, indent=2))
     elif method != 'GET':
         print('done')
 
@@ -368,7 +377,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             payload = _load_payload(args.payload)
             body = _request(slug, token, args.method, args.path, payload).body
-        _print_result(args.method, body)
+        _print_result(args.method, body, args.compact)
     except HelperError as err:
         print(err, file=sys.stderr)
         return 1
