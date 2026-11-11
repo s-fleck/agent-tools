@@ -1,11 +1,11 @@
 # Architecture
 
-> Binding. Priorities and invariants are added, changed or removed only
-> through an approved OpenSpec change; rewording without changing the meaning
-> is free, and so is the rest of this document. Work that would break an
-> invariant stops and is raised with the user. Behavior: openspec/specs/.
-> Decisions: openspec/changes/archive/. Vocabulary: GLOSSARY.yaml.
-> Scope: VISION.md.
+> Binding: the priorities and invariants; the rest is free to edit. Changing
+> them needs an approved OpenSpec change (binding-docs skill); work that breaks
+> an invariant stops and is raised with the user.
+
+Behavior: `openspec/specs/` · Decisions: `openspec/changes/archive/` ·
+Vocabulary: `GLOSSARY.yaml` · Scope: `VISION.md`
 
 ## Bird's Eye View
 

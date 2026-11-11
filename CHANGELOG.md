@@ -17,6 +17,7 @@ name as the area prefix.
 
 ### Changed
 
+- **binding-docs:** Shorten each template's header to one notice (what is binding, that changes need an approved OpenSpec change, that collisions stop) and move ARCHITECTURE's pointers to the other docs onto their own line; the change procedure stays in the skill (1.1.0)
 - **postmortem:** Trigger on a changed binding fact instead of any binding-doc edit, route rule changes to their owner, and drop the `Status:` exemption and docs-map listing for the registry (2.0.0)
 
 ## [0.4.0] - 2026-10-29

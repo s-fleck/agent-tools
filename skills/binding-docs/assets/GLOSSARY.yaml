@@ -1,9 +1,8 @@
-# Ubiquitous language for <product>.
-# Code, specs, docs and conversation use these terms with exactly this meaning.
-# Binding. Renaming or retiring a term, or changing its meaning, needs an
-# approved OpenSpec change. Adding a term, adding to avoid or see, and rewording
-# a meaning without changing it are free. Work that would use a term against
-# its meaning stops and is raised with the user.
+# Ubiquitous language for <product>: code, specs, docs and conversation use
+# these terms with exactly this meaning.
+# Binding: each term and its meaning. Renaming, retiring or redefining a term
+# needs an approved OpenSpec change (binding-docs skill); work that would use a
+# term against its meaning stops and is raised with the user.
 
 terms:
   - term: Billing account
