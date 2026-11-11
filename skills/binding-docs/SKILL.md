@@ -9,7 +9,7 @@ description: >
   overview", or when docs drift from specs or code.
 metadata:
   author: Stefan Fleck
-  version: "1.0.0"
+  version: "1.1.0"
 ---
 
 # Binding Docs
@@ -59,9 +59,16 @@ the ecosystem requires it (e.g. `.Rbuildignore`).
 | `ARCHITECTURE.md` | Bird's eye view, code map, priorities, invariants | `assets/ARCHITECTURE.md` |
 | `GLOSSARY.yaml` | Domain terms and their meanings | `assets/GLOSSARY.yaml` |
 
-Copy the template when creating a doc: keep its header (it says what is
-binding and what to do on a collision, for agents that never load this skill), drop header pointers to docs the project does not have, replace
-every `<placeholder>` and delete the example entries.
+Copy the template when creating a doc: keep its header, drop pointers to docs
+the project does not have, replace every `<placeholder>` and delete the
+example entries.
+
+The header is one notice for readers that never load this skill. It names
+what is binding in that doc, that changing it needs an approved OpenSpec
+change, and that colliding work stops and is raised with the user. It does not
+restate the change procedure or the free changes; those stay here. Keep
+navigation, such as ARCHITECTURE's pointers to the other docs, on its own line
+below the notice.
 
 Create only what the project needs. A small project may have only VISION.
 Create the glossary at the first naming collision or disputed term; never
@@ -228,7 +235,8 @@ check what the rules above do not make obvious:
       audit.
 - [ ] `see` and `replacement` name existing terms; no `avoid` word is used for
       its concept in new code or specs.
-- [ ] Each doc keeps its header; the agent instructions file and the OpenSpec
+- [ ] Each doc keeps a header notice as described in [The Set](#the-set); the
+      agent instructions file and the OpenSpec
       project context point to the set.
 
 Report findings; binding facts change only as described above.
